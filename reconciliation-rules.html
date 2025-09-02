@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regras de Conciliação - Sistema de Conciliação Bancária</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .rules-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .rules-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .rules-header h1 {
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .add-rule-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .add-rule-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .rules-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .rules-info h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .rules-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .rule-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .rule-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .rule-card.inactive {
+            opacity: 0.6;
+            background: #f8f9fa;
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .rule-title {
+            flex: 1;
+        }
+
+        .rule-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .rule-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .rule-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .rule-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .rule-btn:hover {
+            background: var(--background);
+        }
+
+        .rule-btn.edit {
+            color: var(--primary-color);
+        }
+
+        .rule-btn.delete {
+            color: var(--error-color);
+        }
+
+        .rule-btn.toggle {
+            color: var(--success-color);
+        }
+
+        .rule-prompt {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .rule-prompt-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rule-prompt-text {
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        .rule-meta {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rule-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .priority-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background: var(--error-color);
+        }
+
+        .priority-medium {
+            background: var(--warning-color);
+        }
+
+        .priority-low {
+            background: var(--success-color);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Modal para adicionar/editar regra */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .examples-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .examples-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .example-item {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-item:hover {
+            background: var(--primary-light);
+            transform: translateX(5px);
+        }
+
+        .example-prompt {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="rules-container">
+        <div class="rules-header">
+            <h1>
+                <i class="fas fa-robot"></i>
+                Regras de Conciliação com IA
+            </h1>
+            <button class="add-rule-btn" onclick="openAddRuleModal()">
+                <i class="fas fa-plus"></i>
+                Nova Regra
+            </button>
+        </div>
+
+        <div class="rules-info">
+            <h3><i class="fas fa-info-circle"></i> Como funcionam as regras de conciliação?</h3>
+            <p>
+                Você pode criar regras em linguagem natural que serão aplicadas pela IA durante o processo de conciliação.
+                As regras são processadas em ordem de prioridade (menor número = maior prioridade).
+            </p>
+        </div>
+
+        <div id="rulesGrid" class="rules-grid">
+            <!-- Regras serão carregadas aqui -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>Nenhuma regra cadastrada</h3>
+            <p>Crie sua primeira regra de conciliação clicando no botão "Nova Regra"</p>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar/editar regra -->
+    <div id="ruleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nova Regra de Conciliação</h2>
+                <button class="modal-close" onclick="closeRuleModal()">&times;</button>
+            </div>
+
+            <form id="ruleForm">
+                <div class="form-group">
+                    <label class="form-label" for="ruleName">Nome da Regra *</label>
+                    <input type="text" id="ruleName" class="form-input" required 
+                           placeholder="Ex: Conciliação por Data e Valor">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ruleDescription">Descrição</label>
+                    <input type="text" id="ruleDescription" class="form-input" 
+                           placeholder="Ex: Concilia automaticamente quando data e valor são iguais">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="rulePrompt">Regra (em linguagem natural) *</label>
+                    <textarea id="rulePrompt" class="form-textarea" required 
+                              placeholder="Ex: Se a data e o valor são exatamente iguais, a transação deve ser automaticamente conciliada"></textarea>
+                    <div class="form-help">
+                        Escreva a regra como você explicaria para uma pessoa. A IA irá interpretar e aplicar.
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <div class="examples-title">Exemplos de regras (clique para usar):</div>
+                    <div class="example-item" onclick="useExample(this)">
+                        <div class="example-prompt">Se data e valor combinam exatamente, ir para conciliado</div>
+                    </div>
+                    <div class="example-item" onclick="useExample(this)">
+                        <div class="example-prompt">Quando o valor tem diferença menor que 5% e a descrição contém palavras similares, considerar como conciliado</div>
+                    </div>
+                    <div class="example-item" onclick="useExample(this)">
+                        <div class="example-prompt">Se a transação é do tipo PIX e o valor é exato, conciliar automaticamente mesmo sem descrição</div>
+                    </div>
+                    <div class="example-item" onclick="useExample(this)">
+                        <div class="example-prompt">Para valores abaixo de R$ 100, se a data bate com tolerância de 3 dias, sugerir conciliação</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="rulePriority">Prioridade</label>
+                    <input type="number" id="rulePriority" class="form-input" 
+                           min="1" max="100" value="10">
+                    <div class="form-help">
+                        Menor número = maior prioridade. Regras com prioridade 1 são aplicadas primeiro.
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRuleModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Regra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="reconciliation-rules.js"></script>
+</body>
+</html>
