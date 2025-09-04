@@ -506,7 +506,7 @@
                         <div class="settings-form">
                             <div class="form-group">
                                 <label>URL da API</label>
-                                <input type="text" id="apiUrl" value="http://localhost:5000" placeholder="http://localhost:5000">
+                                <input type="text" id="apiUrl" value="https://holdprintwebbankreconciliation-test.azurewebsites.net" placeholder="https://holdprintwebbankreconciliation-test.azurewebsites.net">
                             </div>
                             <div class="form-group">
                                 <label>Timeout (ms)</label>
@@ -1010,7 +1010,7 @@ Instruções:
         async function loadRulesManually() {
             console.log('📋 Carregando lista de regras...');
             try {
-                const response = await fetch('http://localhost:5000/billing-rules');
+                const response = await fetch('https://holdprintwebbankreconciliation-test.azurewebsites.net/billing-rules');
                 const result = await response.json();
                 
                 if (response.ok && result.success) {

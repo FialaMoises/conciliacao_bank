@@ -1,6 +1,6 @@
 // Gerenciamento de Regras de Conciliação com IA
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://holdprintwebbankreconciliation-test.azurewebsites.net';
 
 // Estado da aplicação
 let currentRules = [];

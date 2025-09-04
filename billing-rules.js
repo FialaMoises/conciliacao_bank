@@ -128,7 +128,7 @@ window.savePrompt = async function() {
         }
         
         // Salvar no backend
-        const response = await fetch('http://localhost:5000/api/prompts', {
+        const response = await fetch('https://holdprintwebbankreconciliation-test.azurewebsites.net/api/prompts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -181,7 +181,7 @@ async function loadPromptsFromBackend() {
     console.log('🌐 Carregando prompts do backend...');
     
     try {
-        const response = await fetch('http://localhost:5000/api/prompts');
+        const response = await fetch('https://holdprintwebbankreconciliation-test.azurewebsites.net/api/prompts');
         const result = await response.json();
         
         if (result.success) {
@@ -427,7 +427,7 @@ window.filterPromptsByStatus = function(status) {
 // Função para sincronizar com backend
 async function syncPromptsWithBackend(prompts) {
     try {
-        const response = await fetch('http://localhost:5000/api/prompts/sync', {
+        const response = await fetch('https://holdprintwebbankreconciliation-test.azurewebsites.net/api/prompts/sync', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
