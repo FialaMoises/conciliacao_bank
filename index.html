@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="table-fixes.css">
     <link rel="stylesheet" href="billing-rules.css">
+    <link rel="stylesheet" href="streaming-animations.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -118,16 +119,189 @@
             </section>
 
             <!-- Progress Section -->
-            <section class="progress-section" id="progressSection" style="display: none;">
-                <div class="progress-card">
-                    <div class="progress-header">
-                        <i class="fas fa-cog fa-spin"></i>
-                        <h3>Processando Conciliação</h3>
+            <section class="progress-section streaming-section" id="progressSection" style="display: none;">
+                <div class="progress-card streaming-card">
+                    <div class="progress-header streaming-header">
+                        <i class="fas fa-cog fa-spin status-icon" id="statusIcon"></i>
+                        <h3 id="statusTitle">Processando Conciliação</h3>
+                        <div class="connection-status" id="connectionStatus">
+                            <span class="status-dot connected" id="statusDot"></span>
+                            <span class="status-text" id="statusText">Conectado</span>
+                        </div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+
+                    <!-- Progress Bar with Animation -->
+                    <div class="progress-container">
+                        <div class="progress-bar animated-progress">
+                            <div class="progress-fill streaming-progress" id="progressFill"></div>
+                            <div class="progress-text" id="progressText">Iniciando processamento...</div>
+                        </div>
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
                     </div>
-                    <div class="progress-text" id="progressText">Iniciando processamento...</div>
+
+                    <!-- Step Indicators -->
+                    <div class="step-indicators" id="stepIndicators">
+                        <div class="step-item" data-step="0">
+                            <div class="step-circle"><i class="fas fa-upload"></i></div>
+                            <span class="step-label">Upload</span>
+                        </div>
+                        <div class="step-item" data-step="1">
+                            <div class="step-circle"><i class="fas fa-file-alt"></i></div>
+                            <span class="step-label">Análise</span>
+                        </div>
+                        <div class="step-item" data-step="2">
+                            <div class="step-circle"><i class="fas fa-search"></i></div>
+                            <span class="step-label">Extração</span>
+                        </div>
+                        <div class="step-item" data-step="3">
+                            <div class="step-circle"><i class="fas fa-database"></i></div>
+                            <span class="step-label">MongoDB</span>
+                        </div>
+                        <div class="step-item" data-step="4">
+                            <div class="step-circle"><i class="fas fa-sync-alt"></i></div>
+                            <span class="step-label">Processamento</span>
+                        </div>
+                        <div class="step-item" data-step="5">
+                            <div class="step-circle"><i class="fas fa-brain"></i></div>
+                            <span class="step-label">LLM</span>
+                        </div>
+                        <div class="step-item" data-step="6">
+                            <div class="step-circle"><i class="fas fa-chart-line"></i></div>
+                            <span class="step-label">Análise</span>
+                        </div>
+                        <div class="step-item" data-step="7">
+                            <div class="step-circle"><i class="fas fa-check"></i></div>
+                            <span class="step-label">Resultados</span>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Counters -->
+                    <div class="counters-grid" id="countersGrid">
+                        <div class="counter-item">
+                            <div class="counter-icon"><i class="fas fa-file-upload"></i></div>
+                            <div class="counter-content">
+                                <div class="counter-number" id="uploadedCount">0</div>
+                                <div class="counter-label">Arquivos</div>
+                            </div>
+                        </div>
+                        <div class="counter-item">
+                            <div class="counter-icon"><i class="fas fa-list"></i></div>
+                            <div class="counter-content">
+                                <div class="counter-number" id="extractedCount">0</div>
+                                <div class="counter-label">Transações</div>
+                            </div>
+                        </div>
+                        <div class="counter-item">
+                            <div class="counter-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="counter-content">
+                                <div class="counter-number" id="processedCount">0</div>
+                                <div class="counter-label">Processadas</div>
+                            </div>
+                        </div>
+                        <div class="counter-item">
+                            <div class="counter-icon"><i class="fas fa-link"></i></div>
+                            <div class="counter-content">
+                                <div class="counter-number" id="matchesCount">0</div>
+                                <div class="counter-label">Matches</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Analysis Section -->
+                    <div class="file-analysis" id="fileAnalysis" style="display: none;">
+                        <h4><i class="fas fa-file-alt"></i> Análise do Arquivo</h4>
+                        <div class="analysis-grid">
+                            <div class="analysis-item">
+                                <div class="analysis-icon">
+                                    <i class="fas fa-file-code"></i>
+                                </div>
+                                <div class="analysis-content">
+                                    <div class="analysis-label">Formato</div>
+                                    <div class="analysis-value" id="fileFormat">--</div>
+                                </div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-icon">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div class="analysis-content">
+                                    <div class="analysis-label">Banco</div>
+                                    <div class="analysis-value" id="bankDetected">--</div>
+                                </div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="analysis-content">
+                                    <div class="analysis-label">Período</div>
+                                    <div class="analysis-value" id="dateRange">--</div>
+                                </div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-icon">
+                                    <i class="fas fa-weight"></i>
+                                </div>
+                                <div class="analysis-content">
+                                    <div class="analysis-label">Tamanho</div>
+                                    <div class="analysis-value" id="fileSize">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary -->
+                        <div class="financial-summary">
+                            <div class="financial-item expense">
+                                <div class="financial-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">Despesas</div>
+                                    <div class="financial-value">
+                                        <span class="financial-count" id="expensesCount">0</span>
+                                        <span class="financial-amount" id="expensesAmount">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="financial-item income">
+                                <div class="financial-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">Receitas</div>
+                                    <div class="financial-value">
+                                        <span class="financial-count" id="incomesCount">0</span>
+                                        <span class="financial-amount" id="incomesAmount">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="financial-item total">
+                                <div class="financial-icon">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">Total Movimentado</div>
+                                    <div class="financial-value">
+                                        <span class="financial-amount large" id="totalAmount">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Timeline -->
+                    <div class="event-timeline" id="eventTimeline">
+                        <h4><i class="fas fa-history"></i> Timeline de Eventos</h4>
+                        <div class="timeline-container" id="timelineContainer">
+                            <div class="timeline-item initial">
+                                <div class="timeline-time">--:--</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-event">Sistema inicializado</div>
+                                    <div class="timeline-details">Aguardando arquivo...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -981,6 +1155,7 @@ Instruções:
         </div>
     </div>
 
+    <script src="streaming-manager.js"></script>
     <script src="script.js"></script>
     <script>
         // Funções de fallback mínimas - apenas para garantir que o modal funcione

@@ -1,9 +1,13 @@
 // Configurações da API
-const API_BASE_URL = 'https://holdprintwebbankreconciliation-test.azurewebsites.net';
+const API_BASE_URL = 'http://localhost:5000'; // Para testes locais (sem HTTPS)
 
 // Estado da aplicação
 let currentFile = null;
 let currentResults = null;
+let streamingManager = null;
+
+// Flag para controlar modo de streaming vs modo antigo
+let isStreamingMode = false;
 
 // Elementos DOM - serão inicializados após o DOM carregar
 let elements = {};
@@ -15,9 +19,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     setupEventListeners();
     checkApiStatus();
-    
+
     // Inicializar seções e carregar regras se necessário
     initializeSections();
+
+    // Inicializar StreamingManager
+    initializeStreamingManager();
 });
 
 // Inicializar elementos DOM
@@ -102,12 +109,19 @@ function initializeApp() {
         userAgent: navigator.userAgent,
         timestamp: new Date().toISOString()
     });
-    
+
     resetForm();
-    
+
+    // Ativar modo debug do StreamingManager se disponível
+    if (window.streamingManager && typeof window.streamingManager.enableDebugMode === 'function') {
+        console.log('🔍 Ativando modo debug do StreamingManager...');
+        window.streamingManager.enableDebugMode();
+    }
+
     // Adicionar informações de debug no console
     console.log('Debug: Para testar a API manualmente, use:');
     console.log(`fetch('${API_BASE_URL}/health').then(r => r.json()).then(console.log)`);
+    console.log('Debug: Para testar contadores manualmente, use: testCounters()');
 }
 
 // Configurar event listeners
@@ -147,10 +161,10 @@ function setupEventListeners() {
         }
         if (elements.uploadBtn) {
             elements.uploadBtn.addEventListener('click', () => {
-                console.log('🚀 Botão de upload clicado');
-                uploadFile();
+                console.log('🚀 Botão de upload clicado - usando StreamingManager');
+                uploadWithStreamingManager();
             });
-            console.log('✅ Evento de upload configurado');
+            console.log('✅ Evento de upload StreamingManager configurado');
         } else {
             console.error('❌ uploadBtn não encontrado!');
         }
@@ -585,7 +599,228 @@ function detectBankInfoFromFileName(fileName) {
     }
 }
 
-// Upload do arquivo
+// Variáveis para controle de streaming
+let currentEventSource = null;
+let streamingSessionId = null;
+
+// Upload com Streaming SSE
+async function uploadFileWithStreaming() {
+    if (!currentFile) {
+        showError('Nenhum arquivo selecionado.');
+        return;
+    }
+
+    console.log('🌊 Iniciando upload com streaming...', {
+        fileName: currentFile.name,
+        fileSize: currentFile.size,
+        fileType: currentFile.type,
+        apiUrl: `${API_BASE_URL}/stream/reconcile`,
+        timestamp: new Date().toISOString()
+    });
+
+    showProgress();
+
+    try {
+        // Fechar stream anterior se existir
+        if (currentEventSource) {
+            currentEventSource.close();
+            currentEventSource = null;
+        }
+
+        const formData = new FormData();
+        formData.append('file', currentFile);
+
+        updateProgress(5, 'Conectando ao servidor...');
+
+        // Iniciar requisição SSE
+        const response = await fetch(`${API_BASE_URL}/stream/reconcile`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            // Se não for SSE, processar como erro JSON
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro no servidor');
+        }
+
+        // Obter session ID dos headers
+        streamingSessionId = response.headers.get('X-Session-ID');
+        console.log('🆔 Session ID recebido:', streamingSessionId);
+
+        // Processar stream
+        await processSSEStream(response);
+
+    } catch (error) {
+        console.error('❌ Erro durante upload com streaming:', error);
+        hideProgress();
+        showError(`Erro: ${error.message}`);
+    }
+}
+
+// Processar Stream SSE
+async function processSSEStream(response) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    updateProgress(10, 'Streaming iniciado...');
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                console.log('✅ Stream concluído');
+                break;
+            }
+
+            // Decodificar chunk
+            buffer += decoder.decode(value, { stream: true });
+
+            // Processar eventos completos
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || ''; // Manter última linha incompleta no buffer
+
+            for (const eventBlock of lines) {
+                if (eventBlock.trim()) {
+                    await processSSEEvent(eventBlock);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erro ao processar stream:', error);
+        throw error;
+    } finally {
+        reader.releaseLock();
+    }
+}
+
+// Processar evento SSE individual
+async function processSSEEvent(eventBlock) {
+    try {
+        // Extrair dados do evento SSE
+        const dataLine = eventBlock.split('\n').find(line => line.startsWith('data: '));
+        if (!dataLine) return;
+
+        const jsonData = dataLine.substring(6); // Remove "data: "
+        const eventData = JSON.parse(jsonData);
+
+        console.log('📡 Evento SSE recebido:', eventData);
+
+        switch (eventData.type) {
+            case 'progress':
+                await handleProgressEvent(eventData);
+                break;
+            case 'complete':
+                await handleCompleteEvent(eventData);
+                break;
+            case 'error':
+                await handleErrorEvent(eventData);
+                break;
+            default:
+                console.log('📡 Evento desconhecido:', eventData.type);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao processar evento SSE:', error);
+    }
+}
+
+// Handler para eventos de progresso
+async function handleProgressEvent(eventData) {
+    const { progress, message, step } = eventData;
+
+    // Converter progresso para porcentagem
+    const progressPercent = Math.round(progress * 100);
+
+    updateProgress(progressPercent, message);
+
+    console.log(`📊 Progresso: ${progressPercent}% - ${step}: ${message}`);
+
+    // Adicionar informações específicas por etapa
+    if (eventData.transaction_count) {
+        updateProgress(progressPercent, `${message} (${eventData.transaction_count} transações)`);
+    }
+
+    if (eventData.conciliated_count !== undefined) {
+        updateProgress(progressPercent, `${message} (${eventData.conciliated_count} conciliadas)`);
+    }
+}
+
+// Handler para evento de conclusão
+async function handleCompleteEvent(eventData) {
+    console.log('🎉 Conciliação concluída!', eventData);
+
+    updateProgress(100, 'Conciliação concluída com sucesso!');
+
+    // Aguardar um pouco e então buscar o resultado completo
+    setTimeout(async () => {
+        await fetchStreamResult(eventData.session_id);
+    }, 1000);
+}
+
+// Handler para eventos de erro
+async function handleErrorEvent(eventData) {
+    console.error('❌ Erro SSE recebido:', eventData);
+
+    hideProgress();
+    showError(`Erro durante processamento: ${eventData.error}`);
+
+    if (eventData.details) {
+        console.error('Detalhes do erro:', eventData.details);
+    }
+}
+
+// Buscar resultado completo da sessão
+async function fetchStreamResult(sessionId) {
+    try {
+        console.log('🔍 Buscando resultado da sessão:', sessionId);
+
+        const response = await fetch(`${API_BASE_URL}/stream/session/${sessionId}/result`);
+        const data = await response.json();
+
+        if (data.success && data.result) {
+            // Processar resultado como no método original
+            processReconciliationResult(data.result);
+        } else {
+            console.error('❌ Erro ao obter resultado:', data.error);
+            showError('Erro ao obter resultado da conciliação');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao buscar resultado:', error);
+        showError('Erro ao obter resultado da conciliação');
+    }
+}
+
+// Processar resultado da conciliação (método comum)
+function processReconciliationResult(result) {
+    hideProgress();
+
+    console.log('📊 Processando resultado da conciliação:', result);
+
+    // Criar estrutura compatível com showResults existente
+    const compatibleResult = {
+        ...result,
+        summary: {
+            conciliated_count: result.conciliated?.length || 0,
+            suggested_count: result.suggested?.length || 0,
+            pending_count: result.pending?.length || 0,
+            no_correlation_count: result.no_correlation?.length || 0,
+            unmatched_mongo_count: result.unmatched_mongo?.length || 0
+        },
+        result: result // Para compatibilidade com código existente
+    };
+
+    console.log('📊 Resumo da conciliação:', compatibleResult.summary);
+
+    // Exibir resultados usando a função existente
+    showResults(compatibleResult);
+
+    console.log('✅ Processamento concluído com sucesso!');
+}
+
+// Upload do arquivo (método original mantido para compatibilidade)
 async function uploadFile() {
     if (!currentFile) {
         showError('Nenhum arquivo selecionado.');
@@ -691,7 +926,11 @@ function showProgress() {
     elements.progressSection.style.display = 'block';
     elements.resultsSection.style.display = 'none';
     elements.errorSection.style.display = 'none';
-    updateProgress(0, 'Iniciando...');
+
+    // Só resetar progresso se não estiver em modo streaming
+    if (!isStreamingMode) {
+        updateProgress(0, 'Iniciando...');
+    }
 }
 
 // Atualizar progresso
@@ -875,6 +1114,10 @@ function showStructureSuccess(result) {
             </div>` : ''}
             
             <div class="action-buttons">
+                <button class="btn btn-success" onclick="startStreamingReconciliation(); closeModal();">
+                    <i class="fas fa-rocket"></i>
+                    Iniciar Conciliação com Streaming
+                </button>
                 <button class="btn btn-primary" onclick="resetForm(); closeModal();">
                     <i class="fas fa-plus"></i>
                     Estruturar Outro Arquivo
@@ -1578,6 +1821,7 @@ function downloadReport() {
 function resetForm() {
     currentFile = null;
     currentResults = null;
+    isStreamingMode = false; // Resetar modo streaming
     
     elements.fileInfo.style.display = 'none';
     elements.dropZone.style.display = 'block';
@@ -3094,3 +3338,490 @@ if (!document.getElementById('liquidation-animations')) {
     `;
     document.head.appendChild(style);
 }
+
+// ==================== STREAMING MANAGER INTEGRATION ====================
+
+/**
+ * Inicializa o StreamingManager com teste de conectividade
+ */
+async function initializeStreamingManager() {
+    try {
+        console.log('🚀 Inicializando StreamingManager...');
+
+        // Teste 1: Verificar se a classe StreamingManager está disponível
+        if (typeof StreamingManager === 'undefined') {
+            console.warn('⚠️ StreamingManager classe não encontrada');
+            return false;
+        }
+
+        // Teste 2: Verificar conectividade com a API
+        console.log('🔍 Testando conectividade com a API...');
+        try {
+            const healthResponse = await fetch(`${API_BASE_URL}/health`, { timeout: 5000 });
+            if (!healthResponse.ok) {
+                console.warn('⚠️ API não está respondendo adequadamente');
+            } else {
+                console.log('✅ API está acessível');
+            }
+        } catch (error) {
+            console.warn('⚠️ Não foi possível testar conectividade da API:', error.message);
+        }
+
+        // Teste 3: Verificar elementos DOM necessários
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const extractedCount = document.getElementById('extractedCount');
+        const processedCount = document.getElementById('processedCount');
+
+        const missingElements = [];
+        if (!progressSection) missingElements.push('progressSection');
+        if (!progressFill) missingElements.push('progressFill');
+        if (!extractedCount) missingElements.push('extractedCount');
+        if (!processedCount) missingElements.push('processedCount');
+
+        if (missingElements.length > 0) {
+            console.warn('⚠️ Elementos DOM não encontrados:', missingElements.join(', '));
+        } else {
+            console.log('✅ Todos os elementos DOM necessários encontrados');
+        }
+
+        // Inicializar StreamingManager
+        streamingManager = new StreamingManager(API_BASE_URL, 'progressSection');
+        console.log('✅ StreamingManager inicializado com sucesso');
+
+        // Ativar debug mode para troubleshooting
+        streamingManager.enableDebugMode();
+        console.log('🔍 Debug mode ativado no StreamingManager');
+
+        // Teste manual dos contadores
+        console.log('🧪 Testando contadores inicialmente...');
+        streamingManager.updateCounter('extractedCount', 0);
+        streamingManager.updateCounter('processedCount', 0);
+
+        return true;
+
+    } catch (error) {
+        console.error('❌ Erro ao inicializar StreamingManager:', error);
+        return false;
+    }
+}
+
+/**
+ * Upload usando StreamingManager moderno
+ */
+async function uploadWithStreamingManager() {
+    if (!currentFile) {
+        showError('Nenhum arquivo selecionado.');
+        return;
+    }
+
+    console.log('🌊 Iniciando upload com StreamingManager...', {
+        fileName: currentFile.name,
+        fileSize: currentFile.size,
+        hasStreamingManager: !!streamingManager
+    });
+
+    // Forçar reinicialização se StreamingManager não estiver disponível
+    if (!streamingManager) {
+        console.log('🔄 Tentando reinicializar StreamingManager...');
+        const initialized = await initializeStreamingManager();
+        if (!initialized) {
+            console.warn('⚠️ Fallback para método SSE direto');
+            await uploadFileWithStreaming();
+            return;
+        }
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('file', currentFile);
+
+        console.log('🚀 Iniciando streaming com StreamingManager');
+        await streamingManager.startStreaming(formData);
+
+    } catch (error) {
+        console.error('❌ Erro durante upload com StreamingManager:', error);
+
+        // Log do erro para debugging
+        console.error('Detalhes do erro:', {
+            message: error.message,
+            stack: error.stack,
+            streamingManagerState: streamingManager ? streamingManager.getStatus() : 'N/A'
+        });
+
+        showError(`Erro durante streaming: ${error.message}`);
+
+        // Tentar fallback em caso de erro
+        try {
+            console.log('🔄 Tentando fallback para método SSE direto...');
+            await uploadFileWithStreaming();
+        } catch (fallbackError) {
+            console.error('❌ Erro também no fallback:', fallbackError);
+            showError(`Erro crítico: ${fallbackError.message}`);
+        }
+    }
+}
+
+/**
+ * Função de fallback para compatibilidade
+ */
+function getStreamingStatus() {
+    if (streamingManager) {
+        return streamingManager.getStatus();
+    }
+    return {
+        state: 'unknown',
+        message: 'StreamingManager não disponível'
+    };
+}
+
+/**
+ * Desconectar streaming se necessário
+ */
+function disconnectStreaming() {
+    if (streamingManager) {
+        streamingManager.disconnect();
+        console.log('🔌 Streaming desconectado');
+    }
+}
+
+// Função para iniciar conciliação com streaming
+function startStreamingReconciliation() {
+    console.log('🚀 Iniciando conciliação com streaming...');
+
+    if (!window.streamingManager) {
+        console.error('❌ StreamingManager não inicializado');
+        showError('StreamingManager não está disponível. Recarregue a página.');
+        return;
+    }
+
+    if (!currentFile) {
+        console.error('❌ Nenhum arquivo selecionado');
+        showError('Nenhum arquivo selecionado para conciliação.');
+        return;
+    }
+
+    try {
+        // Ativar modo streaming
+        isStreamingMode = true;
+        console.log('✅ Modo streaming ativado');
+
+        // Mostrar interface de progresso sem resetar
+        showProgress();
+
+        // Iniciar upload e streaming
+        window.streamingManager.startStreaming(currentFile);
+    } catch (error) {
+        console.error('❌ Erro ao iniciar streaming:', error);
+        isStreamingMode = false; // Desativar modo streaming em caso de erro
+        showError(`Erro ao iniciar streaming: ${error.message}`);
+    }
+}
+
+// REMOVIDO: Inicialização dupla do StreamingManager
+// Agora é inicializado apenas em initializeStreamingManager() para evitar conflitos
+
+// Adicionar listener para limpeza quando página é fechada
+window.addEventListener('beforeunload', () => {
+    disconnectStreaming();
+
+    // Desconectar StreamingManager se existir
+    if (window.streamingManager) {
+        window.streamingManager.disconnect();
+    }
+});
+
+// ==================== FUNÇÕES DE DEBUG ====================
+
+/**
+ * Função para testar contadores manualmente
+ */
+function testCounters() {
+    console.log('🧪 === TESTE MANUAL DOS CONTADORES ===');
+
+    // Verificar se os elementos existem
+    const counters = ['uploadedCount', 'extractedCount', 'processedCount', 'matchesCount'];
+
+    console.log('📋 Verificando elementos:');
+    counters.forEach(counterId => {
+        const element = document.getElementById(counterId);
+        console.log(`  ${counterId}: ${element ? '✅ Encontrado' : '❌ NÃO encontrado'}`);
+        if (element) {
+            console.log(`    Valor atual: ${element.textContent}`);
+            console.log(`    Tag: ${element.tagName}, Classes: ${element.className}`);
+        }
+    });
+
+    // Testar atualização manual
+    console.log('\n🔧 Testando atualização manual:');
+
+    if (window.streamingManager && typeof window.streamingManager.updateCounter === 'function') {
+        console.log('  Testando com StreamingManager...');
+        window.streamingManager.updateCounter('extractedCount', 106);
+        window.streamingManager.updateCounter('processedCount', 50);
+        window.streamingManager.updateCounter('matchesCount', 25);
+    } else {
+        console.log('  StreamingManager não disponível, testando diretamente...');
+
+        // Teste direto
+        const extractedElement = document.getElementById('extractedCount');
+        if (extractedElement) {
+            extractedElement.textContent = '106';
+            console.log('  ✅ extractedCount atualizado para 106');
+        }
+
+        const processedElement = document.getElementById('processedCount');
+        if (processedElement) {
+            processedElement.textContent = '50';
+            console.log('  ✅ processedCount atualizado para 50');
+        }
+    }
+
+    // Verificar resultado final
+    setTimeout(() => {
+        console.log('\n📊 Resultado do teste:');
+        counters.forEach(counterId => {
+            const element = document.getElementById(counterId);
+            if (element) {
+                console.log(`  ${counterId}: ${element.textContent}`);
+            }
+        });
+    }, 500);
+}
+
+/**
+ * Função para simular evento de transações extraídas
+ */
+function simulateExtractedEvent() {
+    console.log('🎭 Simulando evento transactions_extracted...');
+
+    if (window.streamingManager) {
+        const fakeEvent = {
+            type: 'transactions_extracted',
+            transaction_count: 106,
+            count: 106,
+            file_format: 'OFX',
+            bank_detected: 'TESTE'
+        };
+
+        console.log('📡 Enviando evento fake:', fakeEvent);
+        window.streamingManager.handleExtractedEvent(fakeEvent);
+    } else {
+        console.error('❌ StreamingManager não disponível');
+    }
+}
+
+/**
+ * Simular conciliação ao vivo com eventos granulares
+ */
+function simulateLiveReconciliation() {
+    console.log('🎭 === SIMULANDO CONCILIAÇÃO AO VIVO ===');
+
+    if (!window.streamingManager) {
+        console.error('❌ StreamingManager não disponível');
+        return;
+    }
+
+    const totalTransactions = 50;
+    let currentTransaction = 0;
+    let currentMatches = 0;
+
+    // Simular processamento de cada transação
+    const processNext = () => {
+        if (currentTransaction >= totalTransactions) {
+            console.log('✅ Simulação concluída!');
+            return;
+        }
+
+        currentTransaction++;
+
+        // Evento de processamento de transação individual
+        window.streamingManager.processSSEEvent({
+            type: 'transaction_processing',
+            current: currentTransaction,
+            total: totalTransactions,
+            transaction_id: `TX_${currentTransaction}`,
+            progress_percent: (currentTransaction / totalTransactions) * 100
+        });
+
+        // Simular match encontrado (30% das transações)
+        if (Math.random() < 0.3) {
+            currentMatches++;
+            setTimeout(() => {
+                window.streamingManager.processSSEEvent({
+                    type: 'match_found',
+                    transaction_id: `TX_${currentTransaction}`,
+                    match_type: 'conciliated',
+                    current_matches: currentMatches
+                });
+            }, 100);
+        }
+
+        // Continuar processamento após delay
+        setTimeout(processNext, 150);
+    };
+
+    // Iniciar simulação
+    processNext();
+}
+
+/**
+ * Simular lotes de processamento
+ */
+function simulateBatchProcessing() {
+    console.log('🎭 Simulando processamento em lotes...');
+
+    if (!window.streamingManager) {
+        console.error('❌ StreamingManager não disponível');
+        return;
+    }
+
+    const batchSize = 10;
+    const totalTransactions = 100;
+    let processed = 0;
+
+    const processBatch = () => {
+        if (processed >= totalTransactions) {
+            console.log('✅ Todos os lotes processados!');
+            return;
+        }
+
+        processed += batchSize;
+        const remaining = totalTransactions - processed;
+
+        window.streamingManager.processSSEEvent({
+            type: 'batch_processed',
+            batch_size: batchSize,
+            total_processed: processed,
+            remaining: remaining
+        });
+
+        console.log(`📦 Lote processado: ${processed}/${totalTransactions}`);
+
+        // Próximo lote após delay
+        if (remaining > 0) {
+            setTimeout(processBatch, 300);
+        }
+    };
+
+    // Iniciar processamento em lotes
+    processBatch();
+}
+
+/**
+ * Testar atualizações de contador granulares
+ */
+function testGranularCounters() {
+    console.log('🧪 Testando contadores granulares...');
+
+    if (!window.streamingManager) {
+        console.error('❌ StreamingManager não disponível');
+        return;
+    }
+
+    // Simular atualizações incrementais
+    let count = 0;
+    const maxCount = 25;
+
+    const incrementCounter = () => {
+        if (count >= maxCount) {
+            console.log('✅ Teste de contadores concluído!');
+            return;
+        }
+
+        count++;
+
+        // Simular evento de atualização de contador
+        window.streamingManager.processSSEEvent({
+            type: 'counter_update',
+            counters: {
+                processed: count,
+                matches: Math.floor(count * 0.4)
+            }
+        });
+
+        console.log(`📊 Contadores atualizados: processed=${count}, matches=${Math.floor(count * 0.4)}`);
+
+        // Próximo incremento
+        setTimeout(incrementCounter, 200);
+    };
+
+    // Iniciar teste
+    incrementCounter();
+}
+
+/**
+ * Função para testar conectividade completa
+ */
+async function testFullConnectivity() {
+    console.log('🧪 === TESTE COMPLETO DE CONECTIVIDADE ===');
+
+    if (window.streamingManager) {
+        console.log('1️⃣ Testando StreamingManager...');
+        await window.streamingManager.testSSEConnection();
+
+        console.log('\n2️⃣ Testando simulação de eventos...');
+        window.streamingManager.simulateTestEvent('transactions_extracted', { count: 197 });
+
+        console.log('\n3️⃣ Status interno...');
+        window.streamingManager.logInternalState();
+    } else {
+        console.error('❌ StreamingManager não está disponível');
+    }
+}
+
+/**
+ * Função para verificar configuração atual
+ */
+function checkConfiguration() {
+    console.log('🔍 === VERIFICAÇÃO DE CONFIGURAÇÃO ===');
+    console.log('API Base URL:', API_BASE_URL);
+    console.log('StreamingManager disponível:', !!window.streamingManager);
+    console.log('Arquivo atual:', currentFile ? currentFile.name : 'Nenhum');
+    console.log('Modo streaming:', isStreamingMode);
+
+    // Verificar elementos DOM críticos
+    const criticalElements = ['extractedCount', 'processedCount', 'matchesCount', 'progressSection'];
+    console.log('\nElementos DOM:');
+    criticalElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`  ${id}: ${element ? `✅ (valor: "${element.textContent}")` : '❌ NÃO ENCONTRADO'}`);
+    });
+}
+
+/**
+ * Função para forçar reinicialização completa
+ */
+async function forceReinitialize() {
+    console.log('🔄 === FORÇANDO REINICIALIZAÇÃO COMPLETA ===');
+
+    // Desconectar StreamingManager existente
+    if (window.streamingManager) {
+        window.streamingManager.disconnect();
+        window.streamingManager = null;
+    }
+
+    // Reinicializar
+    const success = await initializeStreamingManager();
+    if (success) {
+        console.log('✅ Reinicialização concluída com sucesso');
+        console.log('🧪 Executando teste rápido...');
+        await testFullConnectivity();
+    } else {
+        console.error('❌ Falha na reinicialização');
+    }
+}
+
+// Expor funções globalmente para teste
+window.testCounters = testCounters;
+window.simulateExtractedEvent = simulateExtractedEvent;
+window.testFullConnectivity = testFullConnectivity;
+window.checkConfiguration = checkConfiguration;
+window.forceReinitialize = forceReinitialize;
+
+// Expor novas funções de simulação granular
+window.simulateLiveReconciliation = simulateLiveReconciliation;
+window.simulateBatchProcessing = simulateBatchProcessing;
+window.testGranularCounters = testGranularCounters;
+
+// ==================== FIM STREAMING MANAGER ====================
