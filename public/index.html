@@ -1322,26 +1322,6 @@
         </div>
 
         <div class="content">
-            <!-- API Key Input -->
-            <div style="margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <label for="apiKeyInput" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; font-size: 0.95rem;">
-                    🔑 X-API-KEY (Opcional - Multi-Tenant)
-                </label>
-                <input
-                    type="text"
-                    id="apiKeyInput"
-                    placeholder="Digite seu X-API-KEY ou deixe em branco para usar configuração padrão"
-                    style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; transition: border-color 0.3s;"
-                    maxlength="24"
-                    pattern="[a-fA-F0-9]{24}"
-                />
-                <div id="apiKeyStatus" style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;"></div>
-                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280;">
-                    💡 <strong>Multi-Tenant:</strong> Forneça seu X-API-KEY para usar seu banco de dados específico<br>
-                    📝 <strong>Modo Padrão:</strong> Deixe em branco para usar a configuração padrão do sistema
-                </div>
-            </div>
-
             <!-- Upload Zone -->
             <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon" id="uploadIcon">
@@ -1744,15 +1724,14 @@
         // Configuração dinâmica para funcionar local e no Render
         const WEBSOCKET_URL = window.location.origin; // Mesma origem do frontend
         const API_BASE_URL = 'https://holdprintwebbankreconciliation-test.azurewebsites.net'; // Backend Python no Azure
+        const DEFAULT_API_KEY = '65b7dc370e6dc686d4478ea1'; // API Key padrão fixo
 
         // Estado
         let currentFile = null;
         let currentSessionId = null;
         let preparationTime = 0;
-        let autoFetchedApiKey = null;  // API Key obtida automaticamente
         let progressStartTime = 0;
         let progressInterval = null;
-        let currentApiKey = null;
 
         // Estado do streaming
         let streamingEventSource = null;
@@ -1777,8 +1756,6 @@
             uploadTitle: document.getElementById('uploadTitle'),
             uploadSubtitle: document.getElementById('uploadSubtitle'),
             fileInput: document.getElementById('fileInput'),
-            apiKeyInput: document.getElementById('apiKeyInput'),
-            apiKeyStatus: document.getElementById('apiKeyStatus'),
             smartPreview: document.getElementById('smartPreview'),
             previewTitle: document.getElementById('previewTitle'),
             previewStats: document.getElementById('previewStats'),
@@ -1792,64 +1769,18 @@
             logSection: document.getElementById('logSection')
         };
 
-        // Auto-fetch X-API-KEY do backend (busca por tenant_id)
-        async function fetchApiKeyAutomatically() {
-            try {
-                // CONFIGURAÇÃO: Defina o tenant_id (X-API-KEY) aqui
-                const tenantId = '65b7dc370e6dc686d4478ea1';
-
-                // Montar URL com tenant_id
-                const fetchUrl = `${API_BASE_URL}/api/get-api-key?tenant_id=${tenantId}`;
-
-                log('🔑 Validando X-API-KEY e obtendo informações do tenant...');
-
-                const response = await fetch(fetchUrl);
-                const data = await response.json();
-
-                if (data.success) {
-                    autoFetchedApiKey = data.api_key;
-                    currentApiKey = data.api_key;  // Usar como currentApiKey
-
-                    log(`✅ X-API-KEY validado: ${autoFetchedApiKey.substring(0, 8)}...`);
-                    log(`📊 Tenant: ${data.tenant_info.name || data.tenant_info.email}`);
-                    log(`🏢 Empresa: ${data.tenant_info.company || 'N/A'}`);
-                    log(`💾 Database: ${data.tenant_info.database}`);
-
-                    // Atualizar interface (se existir campo de API Key)
-                    if (elements.apiKeyInput) {
-                        elements.apiKeyInput.value = autoFetchedApiKey;
-                        validateApiKey();  // Validar e mostrar status
-                    }
-
-                    return true;
-                } else {
-                    log(`⚠️ Não foi possível validar X-API-KEY: ${data.error}`);
-                    log('📝 Sistema irá usar modo legado (.env)');
-                    return false;
-                }
-            } catch (error) {
-                console.error('❌ Erro ao validar X-API-KEY:', error);
-                log('⚠️ Erro ao validar X-API-KEY - usando modo legado (.env)');
-                return false;
-            }
-        }
-
         // Inicialização
         document.addEventListener('DOMContentLoaded', async function() {
             setupEventListeners();
             initializeWebSocket();
             log('🚀 Sistema de upload inteligente carregado');
-
-            // Buscar API Key automaticamente ao carregar
-            await fetchApiKeyAutomatically();
+            log(`🔑 Usando API Key padrão: ${DEFAULT_API_KEY.substring(0, 8)}...`);
         });
 
         // Event listeners
         function setupEventListeners() {
             elements.fileInput.addEventListener('change', handleFileSelect);
             elements.reconcileBtn.addEventListener('click', executeReconciliation);
-            elements.apiKeyInput.addEventListener('input', validateApiKey);
-            elements.apiKeyInput.addEventListener('blur', validateApiKey);
 
             // Drag & Drop
             elements.uploadZone.addEventListener('dragover', handleDragOver);
@@ -1857,44 +1788,11 @@
             elements.uploadZone.addEventListener('drop', handleDrop);
         }
 
-        // Validar X-API-KEY
-        function validateApiKey() {
-            const apiKey = elements.apiKeyInput.value.trim();
-
-            if (!apiKey) {
-                elements.apiKeyStatus.textContent = '';
-                elements.apiKeyInput.style.borderColor = '#e5e7eb';
-                currentApiKey = null;
-                return false;
-            }
-
-            // Validar formato (24 caracteres hexadecimais)
-            const isValid = /^[a-fA-F0-9]{24}$/.test(apiKey);
-
-            if (isValid) {
-                elements.apiKeyStatus.textContent = '✅ X-API-KEY válido';
-                elements.apiKeyStatus.style.color = '#10b981';
-                elements.apiKeyInput.style.borderColor = '#10b981';
-                currentApiKey = apiKey;
-                return true;
-            } else {
-                elements.apiKeyStatus.textContent = '❌ X-API-KEY inválido (deve ter 24 caracteres hexadecimais)';
-                elements.apiKeyStatus.style.color = '#ef4444';
-                elements.apiKeyInput.style.borderColor = '#ef4444';
-                currentApiKey = null;
-                return false;
-            }
-        }
-
-        // Obter headers com X-API-KEY
+        // Obter headers com X-API-KEY padrão
         function getHeaders() {
-            const headers = {};
-
-            if (currentApiKey) {
-                headers['X-API-KEY'] = currentApiKey;
-            }
-
-            return headers;
+            return {
+                'X-API-KEY': DEFAULT_API_KEY
+            };
         }
 
         // Drag & Drop handlers
@@ -1968,14 +1866,7 @@
         // PREPARAÇÃO AUTOMÁTICA DOS DADOS
         async function prepareDataAutomatically(file) {
             log('🔄 Iniciando preparação automática dos dados...');
-
-            // Validar API key (opcional - não bloqueia execução)
-            validateApiKey();
-            if (currentApiKey) {
-                log(`🔑 Modo Multi-Tenant: Usando X-API-KEY: ${currentApiKey.substring(0, 8)}...`);
-            } else {
-                log('📝 Modo Legado: Usando configuração padrão (.env)');
-            }
+            log(`🔑 Usando X-API-KEY: ${DEFAULT_API_KEY.substring(0, 8)}...`);
 
             updateProgressStep(3, 'brain', 'Processando arquivo', 'Extraindo e analisando transações');
             updateProgressBar(60);
