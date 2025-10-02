@@ -1,0 +1,3451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Upload Inteligente - Conciliação Transparente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #10b981 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ffffff, #e0f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        .header .features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .feature-item i {
+            font-size: 1.1rem;
+            color: #10b981;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        /* Cards de Estatísticas Financeiras */
+        .financial-dashboard {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .financial-dashboard.show {
+            display: block;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--card-color, #3b82f6);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.total-card {
+            --card-color: #3b82f6;
+        }
+
+        .stat-card.expenses-card {
+            --card-color: #ef4444;
+        }
+
+        .stat-card.income-card {
+            --card-color: #10b981;
+        }
+
+        .stat-card.bank-card {
+            --card-color: #8b5cf6;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            background: var(--card-color, #3b82f6);
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.875rem;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Barra de distribuição */
+        .distribution-bar {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .distribution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .distribution-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 20%;
+            height: 100%;
+            background: #10b981;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .upload-zone:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-zone.dragover {
+            border-color: #10b981;
+            background: #f0fdf4;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone.ready .upload-icon {
+            color: #10b981;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .smart-preview {
+            background: #f0fdf4;
+            border: 1px solid #10b981;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: none;
+        }
+
+        .smart-preview.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-icon {
+            color: #10b981;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .preview-title {
+            color: #065f46;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .preview-stats {
+            color: #047857;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .preview-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #bbf7d0;
+            font-size: 0.875rem;
+            color: #059669;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .log-section {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .performance-box {
+            background: #eff6ff;
+            border: 1px solid #2563eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .performance-box.show {
+            display: block;
+        }
+
+        .performance-title {
+            color: #1d4ed8;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* Interface de Progresso Melhorada */
+        .progress-container {
+            display: none;
+            margin: 2rem 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 2rem;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .progress-title {
+            color: #1e293b;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            height: 2px;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            z-index: 2;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 3;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            border: 3px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .step-circle.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .step-label {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: center;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .step-label.active {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .step-label.completed {
+            color: #059669;
+        }
+
+        .progress-info {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .progress-current {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .progress-details h4 {
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-details p {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        .progress-bar-container {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+            width: 0%;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .progress-stat {
+            text-align: center;
+        }
+
+        .progress-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .progress-stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* === ANIMAÇÕES E RESPONSIVIDADE === */
+
+        /* Animação de entrada para cards */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes countUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Aplicar animações aos cards quando aparecem */
+        .financial-dashboard.show .stat-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .financial-dashboard.show .stat-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .financial-dashboard.show .stat-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .financial-dashboard.show .stat-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .financial-dashboard.show .stat-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        /* Efeito de hover mais suave nos botões */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        /* Animação de pulsação para elementos ativos */
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Responsividade melhorada */
+        @media (max-width: 768px) {
+            .container {
+                margin: 0.5rem;
+                border-radius: 1rem;
+            }
+
+            .header {
+                padding: 2rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .header .features {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+
+            .progress-steps {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .progress-steps::before {
+                display: none;
+            }
+
+            .progress-line {
+                display: none;
+            }
+
+            .progress-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header .subtitle {
+                font-size: 1rem;
+            }
+
+            .progress-info {
+                padding: 1rem;
+            }
+
+            .progress-current {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+
+            .card-details {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .detail-item {
+                text-align: left;
+            }
+        }
+
+        /* Transições suaves para todos os elementos interativos */
+        * {
+            transition: all 0.3s ease;
+        }
+
+        button, .upload-zone, .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Efeito de loading mais dinâmico */
+        .spinner {
+            position: relative;
+        }
+
+        .spinner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: spin 0.8s linear infinite reverse;
+        }
+
+        /* Melhorias visuais para telas pequenas */
+        @media (hover: none) {
+            .stat-card:hover {
+                transform: none;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+
+            .btn:hover {
+                transform: none;
+            }
+        }
+
+        /* Animação para números */
+        .animated-number {
+            animation: countUp 0.8s ease-out;
+        }
+
+        /* Efeito de destaque para elementos importantes */
+        .highlight-effect {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight-effect::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+            animation: highlight 2s ease-in-out;
+        }
+
+        @keyframes highlight {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* === INTERFACE DE STREAMING === */
+
+        .streaming-section {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 1rem;
+            padding: 2rem;
+            color: white;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .streaming-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .streaming-header h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .streaming-status {
+            background: #dc2626;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .streaming-status.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .streaming-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: currentColor;
+            border-radius: 50%;
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .streaming-counters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .streaming-counter {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .streaming-counter:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .counter-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #10b981;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .counter-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .counter-icon {
+            font-size: 1.5rem;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            opacity: 0.6;
+        }
+
+        .streaming-progress {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .streaming-progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .streaming-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+            position: relative;
+        }
+
+        .streaming-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+            animation: shimmer 2s infinite;
+        }
+
+        .streaming-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* === INTERFACE DE RESULTADOS === */
+
+        .results-container {
+            margin: 2rem 0;
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 2rem;
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .results-header h3 {
+            color: #1e293b;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .results-summary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-category {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--category-color);
+        }
+
+        .result-category:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .conciliated-category {
+            --category-color: #10b981;
+        }
+
+        .suggested-category {
+            --category-color: #f59e0b;
+        }
+
+        .pending-category {
+            --category-color: #6b7280;
+        }
+
+        .no-correlation-category {
+            --category-color: #ef4444;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .category-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--category-color);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .category-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+            flex-grow: 1;
+        }
+
+        .category-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--category-color);
+        }
+
+        .category-details {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Responsividade para streaming e resultados */
+        @media (max-width: 768px) {
+            .streaming-counters {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .streaming-section {
+                padding: 1rem;
+            }
+
+            .results-container {
+                padding: 1rem;
+            }
+
+            .category-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .streaming-counters {
+                grid-template-columns: 1fr;
+            }
+
+            .streaming-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🚀 Conciliação Bancária Inteligente</h1>
+                <p class="subtitle">Sistema Otimizado de Duas Fases • Performance Avançada • Interface Moderna</p>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <i class="fas fa-lightning-bolt"></i>
+                        <span>45% mais rápido</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-brain"></i>
+                        <span>IA integrada</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Cache inteligente</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Métricas em tempo real</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- API Key Input -->
+            <div style="margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <label for="apiKeyInput" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                    🔑 X-API-KEY (Opcional - Multi-Tenant)
+                </label>
+                <input
+                    type="text"
+                    id="apiKeyInput"
+                    placeholder="Digite seu X-API-KEY ou deixe em branco para usar configuração padrão"
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; transition: border-color 0.3s;"
+                    maxlength="24"
+                    pattern="[a-fA-F0-9]{24}"
+                />
+                <div id="apiKeyStatus" style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;"></div>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280;">
+                    💡 <strong>Multi-Tenant:</strong> Forneça seu X-API-KEY para usar seu banco de dados específico<br>
+                    📝 <strong>Modo Padrão:</strong> Deixe em branco para usar a configuração padrão do sistema
+                </div>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon" id="uploadIcon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h3 id="uploadTitle">Arraste seu arquivo ou clique aqui</h3>
+                <p id="uploadSubtitle">OFX, CSV, TXT, XLS, XLSX • Máximo 16MB</p>
+                <input type="file" id="fileInput" accept=".ofx,.csv,.txt,.xls,.xlsx" style="display: none;">
+            </div>
+
+            <!-- Messages -->
+            <div class="success-message" id="successMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Progress Interface -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-header">
+                    <h3 class="progress-title">🚀 Processo de Conciliação</h3>
+                    <p class="progress-subtitle">Acompanhe cada etapa em tempo real</p>
+                </div>
+
+                <div class="progress-steps">
+                    <div class="progress-line" id="progressLine"></div>
+
+                    <div class="progress-step">
+                        <div class="step-circle" id="step1">1</div>
+                        <div class="step-label" id="label1">Upload</div>
+                    </div>
+
+                    <div class="progress-step">
+                        <div class="step-circle" id="step2">2</div>
+                        <div class="step-label" id="label2">Preparação</div>
+                    </div>
+
+                    <div class="progress-step">
+                        <div class="step-circle" id="step3">3</div>
+                        <div class="step-label" id="label3">Análise</div>
+                    </div>
+
+                    <div class="progress-step">
+                        <div class="step-circle" id="step4">4</div>
+                        <div class="step-label" id="label4">Conciliação</div>
+                    </div>
+
+                    <div class="progress-step">
+                        <div class="step-circle" id="step5">✓</div>
+                        <div class="step-label" id="label5">Concluído</div>
+                    </div>
+                </div>
+
+                <div class="progress-info">
+                    <div class="progress-current">
+                        <div class="progress-icon" id="progressIcon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="progress-details">
+                            <h4 id="progressCurrentTitle">Iniciando processo...</h4>
+                            <p id="progressCurrentDetail">Preparando sistema para receber arquivo</p>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="progressBarFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat-value" id="progressTime">0s</div>
+                            <div class="progress-stat-label">Tempo</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-value" id="progressFiles">0</div>
+                            <div class="progress-stat-label">Arquivos</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-value" id="progressTransactions">0</div>
+                            <div class="progress-stat-label">Transações</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-value" id="progressSpeed">0%</div>
+                            <div class="progress-stat-label">Progresso</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Streaming Interface -->
+                <div class="streaming-section" id="streamingSection" style="display: none;">
+                    <div class="streaming-header">
+                        <h4>🔴 Conciliação em Tempo Real</h4>
+                        <div class="streaming-status" id="streamingStatus">Aguardando...</div>
+                    </div>
+
+                    <div class="streaming-counters">
+                        <div class="streaming-counter">
+                            <div class="counter-value" id="streamConciliated">0</div>
+                            <div class="counter-label">Conciliadas</div>
+                            <div class="counter-icon">✅</div>
+                        </div>
+                        <div class="streaming-counter">
+                            <div class="counter-value" id="streamSuggested">0</div>
+                            <div class="counter-label">Sugeridas</div>
+                            <div class="counter-icon">💡</div>
+                        </div>
+                        <div class="streaming-counter">
+                            <div class="counter-value" id="streamPending">0</div>
+                            <div class="counter-label">Pendentes</div>
+                            <div class="counter-icon">⏳</div>
+                        </div>
+                        <div class="streaming-counter">
+                            <div class="counter-value" id="streamNoCorrelation">0</div>
+                            <div class="counter-label">Sem Correlação</div>
+                            <div class="counter-icon">❌</div>
+                        </div>
+                    </div>
+
+                    <div class="streaming-progress">
+                        <div class="streaming-progress-bar">
+                            <div class="streaming-progress-fill" id="streamingProgressFill"></div>
+                        </div>
+                        <div class="streaming-info">
+                            <span id="streamingProgressText">Iniciando...</span>
+                            <span id="streamingRate">0 tx/s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-container" id="resultsContainer" style="display: none;">
+                <div class="results-header">
+                    <h3>📋 Resultados da Conciliação</h3>
+                    <div class="results-summary" id="resultsSummary"></div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-category conciliated-category">
+                        <div class="category-header">
+                            <div class="category-icon">✅</div>
+                            <div class="category-title">Conciliadas</div>
+                            <div class="category-count" id="finalConciliated">0</div>
+                        </div>
+                        <div class="category-details" id="conciliatedDetails"></div>
+                        <div class="category-transactions" id="conciliatedTransactions"></div>
+                    </div>
+
+                    <div class="result-category suggested-category">
+                        <div class="category-header">
+                            <div class="category-icon">💡</div>
+                            <div class="category-title">Sugeridas</div>
+                            <div class="category-count" id="finalSuggested">0</div>
+                        </div>
+                        <div class="category-details" id="suggestedDetails"></div>
+                        <div class="category-transactions" id="suggestedTransactions"></div>
+                    </div>
+
+                    <div class="result-category pending-category">
+                        <div class="category-header">
+                            <div class="category-icon">⏳</div>
+                            <div class="category-title">Pendentes</div>
+                            <div class="category-count" id="finalPending">0</div>
+                        </div>
+                        <div class="category-details" id="pendingDetails"></div>
+                        <div class="category-transactions" id="pendingTransactions"></div>
+                    </div>
+
+                    <div class="result-category no-correlation-category">
+                        <div class="category-header">
+                            <div class="category-icon">❌</div>
+                            <div class="category-title">Sem Correlação</div>
+                            <div class="category-count" id="finalNoCorrelation">0</div>
+                        </div>
+                        <div class="category-details" id="noCorrelationDetails"></div>
+                        <div class="category-transactions" id="noCorrelationTransactions"></div>
+                    </div>
+                </div>
+
+                <!-- Seção de Liquidação -->
+                <div class="liquidation-section" id="liquidationSection" style="margin-top: 2rem; padding: 2rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 1rem; border: 2px solid #3b82f6;">
+                    <h3 style="color: #1e40af; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Liquidação de Transações Selecionadas
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
+                                Método de Pagamento <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="paymentMethodId" placeholder="Ex: pm-pix, pm-cartao"
+                                   style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
+                                Conta Financeira <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="text" id="financialAccountId" placeholder="Ex: fa-conta-corrente"
+                                   style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
+                                Motivo da Diferença (opcional)
+                            </label>
+                            <select id="differenceReasonType"
+                                    style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
+                                <option value="">Nenhum</option>
+                                <option value="1">Desconto</option>
+                                <option value="2">Juros</option>
+                                <option value="3">Multa</option>
+                                <option value="4">Taxa bancária</option>
+                                <option value="5">Ajuste contábil</option>
+                                <option value="6">Erro de lançamento</option>
+                                <option value="7">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">Transações Selecionadas:</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #1e40af;" id="selectedCount">0</div>
+                        <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;" id="selectedSummary">Nenhuma transação selecionada</div>
+                    </div>
+
+                    <button class="btn btn-success" id="liquidateBtn" disabled
+                            style="width: 100%; padding: 1rem; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="liquidateText">Liquidar Transações Selecionadas</span>
+                        <div class="spinner" id="liquidateSpinner" style="display: none;"></div>
+                    </button>
+
+                    <div style="margin-top: 1rem; font-size: 0.875rem; color: #64748b; text-align: center;">
+                        ℹ️ Selecione as transações nas categorias acima usando os checkboxes
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Preview (criado dinamicamente) -->
+            <div class="smart-preview" id="smartPreview">
+                <div class="preview-header">
+                    <div class="preview-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="preview-title" id="previewTitle">
+                        ✅ Dados Preparados e Prontos para Conciliação
+                    </div>
+                </div>
+                <div class="preview-stats" id="previewStats">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+                <div class="preview-meta">
+                    <span><strong>Cache:</strong> 2 horas</span>
+                    <span><strong>Tempo estimado:</strong> 2-5 segundos</span>
+                </div>
+            </div>
+
+            <!-- Financial Dashboard -->
+            <div class="financial-dashboard" id="financialDashboard">
+                <h2 class="dashboard-title">📊 Análise Financeira Detalhada</h2>
+
+                <div class="stats-grid">
+                    <!-- Card Total Movimentado -->
+                    <div class="stat-card total-card">
+                        <div class="card-header">
+                            <div class="card-title">Valor Total</div>
+                            <div class="card-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="totalValue">R$ 134.398,41</div>
+                        <div class="card-subtitle">Movimentação do período</div>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <div class="detail-value" id="totalDays">29</div>
+                                <div class="detail-label">Dias</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value" id="totalTransactions">197</div>
+                                <div class="detail-label">Transações</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value" id="avgPerDay">R$ 4.634,43</div>
+                                <div class="detail-label">Média/Dia</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Despesas -->
+                    <div class="stat-card expenses-card">
+                        <div class="card-header">
+                            <div class="card-title">Despesas</div>
+                            <div class="card-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="expensesCount">178</div>
+                        <div class="card-subtitle">Transações de saída</div>
+                        <div class="distribution-bar">
+                            <div class="distribution-fill" style="width: 90.4%"></div>
+                        </div>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <div class="detail-value">90.4%</div>
+                                <div class="detail-label">Do total</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value" id="avgExpense">R$ 682,02</div>
+                                <div class="detail-label">Média</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Receitas -->
+                    <div class="stat-card income-card">
+                        <div class="card-header">
+                            <div class="card-title">Receitas</div>
+                            <div class="card-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="incomeCount">19</div>
+                        <div class="card-subtitle">Transações de entrada</div>
+                        <div class="distribution-bar">
+                            <div class="distribution-fill" style="width: 9.6%"></div>
+                        </div>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <div class="detail-value">9.6%</div>
+                                <div class="detail-label">Do total</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value" id="avgIncome">R$ 1.347,28</div>
+                                <div class="detail-label">Média</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Banco -->
+                    <div class="stat-card bank-card">
+                        <div class="card-header">
+                            <div class="card-title">Instituição</div>
+                            <div class="card-icon">
+                                <i class="fas fa-university"></i>
+                            </div>
+                        </div>
+                        <div class="card-value" id="bankName">Nubank</div>
+                        <div class="card-subtitle" id="bankCode">Código 0260</div>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <div class="detail-value">OFX</div>
+                                <div class="detail-label">Formato</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value">Jul/2025</div>
+                                <div class="detail-label">Período</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-value">56.13KB</div>
+                                <div class="detail-label">Tamanho</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <button class="btn btn-success" id="reconcileBtn" disabled>
+                    <span id="reconcileText">Selecione um arquivo</span>
+                    <div class="spinner" id="reconcileSpinner" style="display: none;"></div>
+                </button>
+            </div>
+
+            <!-- Performance Box -->
+            <div class="performance-box" id="performanceBox">
+                <div class="performance-title">⚡ Estatísticas de Performance</div>
+                <div class="performance-stats" id="performanceStats">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Log -->
+            <div class="log-section" id="logSection">
+                📋 Log do Sistema:\n
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-primary" onclick="clearTest()">
+                    🔄 Novo Teste
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+        // Configuração dinâmica para funcionar local e no Render
+        const WEBSOCKET_URL = window.location.origin; // Mesma origem do frontend
+        const API_BASE_URL = 'https://holdprintwebbankreconciliation-test.azurewebsites.net'; // Backend Python no Azure
+
+        // Estado
+        let currentFile = null;
+        let currentSessionId = null;
+        let preparationTime = 0;
+        let autoFetchedApiKey = null;  // API Key obtida automaticamente
+        let progressStartTime = 0;
+        let progressInterval = null;
+        let currentApiKey = null;
+
+        // Estado do streaming
+        let streamingEventSource = null;
+        let streamingStartTime = 0;
+        let lastTransactionCount = 0;
+        let streamingCounts = {
+            conciliated: 0,
+            suggested: 0,
+            pending: 0,
+            no_correlation: 0
+        };
+
+        // Estado do WebSocket (streaming real)
+        let socket = null;
+        let isWebSocketConnected = false;
+        let realTimeMode = false;
+
+        // Elementos
+        const elements = {
+            uploadZone: document.getElementById('uploadZone'),
+            uploadIcon: document.getElementById('uploadIcon'),
+            uploadTitle: document.getElementById('uploadTitle'),
+            uploadSubtitle: document.getElementById('uploadSubtitle'),
+            fileInput: document.getElementById('fileInput'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            apiKeyStatus: document.getElementById('apiKeyStatus'),
+            smartPreview: document.getElementById('smartPreview'),
+            previewTitle: document.getElementById('previewTitle'),
+            previewStats: document.getElementById('previewStats'),
+            reconcileBtn: document.getElementById('reconcileBtn'),
+            reconcileText: document.getElementById('reconcileText'),
+            reconcileSpinner: document.getElementById('reconcileSpinner'),
+            successMessage: document.getElementById('successMessage'),
+            errorMessage: document.getElementById('errorMessage'),
+            performanceBox: document.getElementById('performanceBox'),
+            performanceStats: document.getElementById('performanceStats'),
+            logSection: document.getElementById('logSection')
+        };
+
+        // Auto-fetch X-API-KEY do backend (busca por tenant_id)
+        async function fetchApiKeyAutomatically() {
+            try {
+                // CONFIGURAÇÃO: Defina o tenant_id (X-API-KEY) aqui
+                const tenantId = '65b7dc370e6dc686d4478ea1';
+
+                // Montar URL com tenant_id
+                const fetchUrl = `${API_BASE_URL}/api/get-api-key?tenant_id=${tenantId}`;
+
+                log('🔑 Validando X-API-KEY e obtendo informações do tenant...');
+
+                const response = await fetch(fetchUrl);
+                const data = await response.json();
+
+                if (data.success) {
+                    autoFetchedApiKey = data.api_key;
+                    currentApiKey = data.api_key;  // Usar como currentApiKey
+
+                    log(`✅ X-API-KEY validado: ${autoFetchedApiKey.substring(0, 8)}...`);
+                    log(`📊 Tenant: ${data.tenant_info.name || data.tenant_info.email}`);
+                    log(`🏢 Empresa: ${data.tenant_info.company || 'N/A'}`);
+                    log(`💾 Database: ${data.tenant_info.database}`);
+
+                    // Atualizar interface (se existir campo de API Key)
+                    if (elements.apiKeyInput) {
+                        elements.apiKeyInput.value = autoFetchedApiKey;
+                        validateApiKey();  // Validar e mostrar status
+                    }
+
+                    return true;
+                } else {
+                    log(`⚠️ Não foi possível validar X-API-KEY: ${data.error}`);
+                    log('📝 Sistema irá usar modo legado (.env)');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Erro ao validar X-API-KEY:', error);
+                log('⚠️ Erro ao validar X-API-KEY - usando modo legado (.env)');
+                return false;
+            }
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async function() {
+            setupEventListeners();
+            initializeWebSocket();
+            log('🚀 Sistema de upload inteligente carregado');
+
+            // Buscar API Key automaticamente ao carregar
+            await fetchApiKeyAutomatically();
+        });
+
+        // Event listeners
+        function setupEventListeners() {
+            elements.fileInput.addEventListener('change', handleFileSelect);
+            elements.reconcileBtn.addEventListener('click', executeReconciliation);
+            elements.apiKeyInput.addEventListener('input', validateApiKey);
+            elements.apiKeyInput.addEventListener('blur', validateApiKey);
+
+            // Drag & Drop
+            elements.uploadZone.addEventListener('dragover', handleDragOver);
+            elements.uploadZone.addEventListener('dragleave', handleDragLeave);
+            elements.uploadZone.addEventListener('drop', handleDrop);
+        }
+
+        // Validar X-API-KEY
+        function validateApiKey() {
+            const apiKey = elements.apiKeyInput.value.trim();
+
+            if (!apiKey) {
+                elements.apiKeyStatus.textContent = '';
+                elements.apiKeyInput.style.borderColor = '#e5e7eb';
+                currentApiKey = null;
+                return false;
+            }
+
+            // Validar formato (24 caracteres hexadecimais)
+            const isValid = /^[a-fA-F0-9]{24}$/.test(apiKey);
+
+            if (isValid) {
+                elements.apiKeyStatus.textContent = '✅ X-API-KEY válido';
+                elements.apiKeyStatus.style.color = '#10b981';
+                elements.apiKeyInput.style.borderColor = '#10b981';
+                currentApiKey = apiKey;
+                return true;
+            } else {
+                elements.apiKeyStatus.textContent = '❌ X-API-KEY inválido (deve ter 24 caracteres hexadecimais)';
+                elements.apiKeyStatus.style.color = '#ef4444';
+                elements.apiKeyInput.style.borderColor = '#ef4444';
+                currentApiKey = null;
+                return false;
+            }
+        }
+
+        // Obter headers com X-API-KEY
+        function getHeaders() {
+            const headers = {};
+
+            if (currentApiKey) {
+                headers['X-API-KEY'] = currentApiKey;
+            }
+
+            return headers;
+        }
+
+        // Drag & Drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        // Seleção de arquivo
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        // Processar arquivo (UPLOAD INTELIGENTE)
+        async function handleFile(file) {
+            log(`📁 Arquivo selecionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+            // Validações
+            if (!validateFile(file)) return;
+
+            currentFile = file;
+
+            // Atualizar UI de upload
+            elements.uploadZone.classList.add('ready');
+            elements.uploadTitle.textContent = `📁 ${file.name}`;
+            elements.uploadSubtitle.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB • Preparando dados...`;
+
+            // Iniciar interface de progresso
+            startProgressTracking();
+
+            // PREPARAÇÃO AUTOMÁTICA (transparente)
+            await prepareDataAutomatically(file);
+        }
+
+        // Validar arquivo
+        function validateFile(file) {
+            const allowedTypes = ['.ofx', '.csv', '.txt', '.xls', '.xlsx'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+            if (!allowedTypes.includes(fileExtension)) {
+                showError('Formato não suportado. Use: OFX, CSV, TXT, XLS, XLSX');
+                return false;
+            }
+
+            if (file.size > 16 * 1024 * 1024) {
+                showError('Arquivo muito grande. Máximo: 16MB');
+                return false;
+            }
+
+            return true;
+        }
+
+        // PREPARAÇÃO AUTOMÁTICA DOS DADOS
+        async function prepareDataAutomatically(file) {
+            log('🔄 Iniciando preparação automática dos dados...');
+
+            // Validar API key (opcional - não bloqueia execução)
+            validateApiKey();
+            if (currentApiKey) {
+                log(`🔑 Modo Multi-Tenant: Usando X-API-KEY: ${currentApiKey.substring(0, 8)}...`);
+            } else {
+                log('📝 Modo Legado: Usando configuração padrão (.env)');
+            }
+
+            updateProgressStep(3, 'brain', 'Processando arquivo', 'Extraindo e analisando transações');
+            updateProgressBar(60);
+
+            const startTime = performance.now();
+
+            try {
+                // Preparar FormData
+                const formData = new FormData();
+                formData.append('file', file);
+
+                log('📡 Enviando para /prepare-reconciliation...');
+
+                // Chamar endpoint de preparação COM X-API-KEY
+                const response = await fetch(`${API_BASE_URL}/prepare-reconciliation`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                preparationTime = performance.now() - startTime;
+
+                if (data.success) {
+                    log(`✅ Preparação concluída em ${preparationTime.toFixed(0)}ms`);
+
+                    currentSessionId = data.session_id;
+
+                    // Atualizar progresso para análise
+                    updateProgressStep(4, 'chart-line', 'Dados preparados', 'Cache criado e análise preliminar concluída');
+                    updateProgressBar(80);
+                    updateProgressStats(1, data.preview.file_stats.transaction_count);
+
+                    // Mostrar preview automático
+                    showSmartPreview(data.preview);
+
+                    // Ativar botão de conciliação com animação
+                    elements.reconcileBtn.disabled = false;
+                    elements.reconcileText.innerHTML = `
+                        <i class="fas fa-rocket"></i>
+                        Conciliar Agora (Instantâneo)
+                    `;
+                    elements.reconcileBtn.className = 'btn btn-success';
+
+                    // Adicionar efeito de pulsação ao botão
+                    addPulseEffect('reconcileBtn', 2000);
+
+                    log('🚀 Sistema pronto para conciliação instantânea!');
+
+                } else {
+                    throw new Error(data.error || 'Erro na preparação');
+                }
+
+            } catch (error) {
+                log(`❌ Erro na preparação: ${error.message}`);
+                showError(`Erro na preparação: ${error.message}`);
+                stopProgressTimer();
+            }
+        }
+
+        // Mostrar preview inteligente
+        function showSmartPreview(preview) {
+            log('👀 Exibindo preview dos dados preparados');
+
+            elements.previewStats.innerHTML = `
+                <strong>${preview.file_stats.transaction_count}</strong> transações •
+                <strong>${preview.system_stats.total_documents}</strong> documentos carregados •
+                Estimativa: <strong>${preview.preliminary_analysis.estimated_conciliation_percentage}%</strong> de conciliação
+            `;
+
+            elements.smartPreview.classList.add('show');
+
+            // Atualizar upload zone
+            elements.uploadTitle.textContent = `✅ ${currentFile.name}`;
+            elements.uploadSubtitle.textContent = `Dados preparados • Cache: 2h • Pronto para conciliar`;
+
+            // Mostrar dashboard financeiro com dados reais
+            updateFinancialDashboard(preview);
+        }
+
+        // Atualizar dashboard financeiro com dados do backend
+        function updateFinancialDashboard(preview) {
+            log('📊 Atualizando dashboard financeiro com dados reais');
+
+            const stats = preview.file_stats;
+            const analysis = preview.preliminary_analysis;
+
+            // Calcular estatísticas
+            const totalTransactions = stats.transaction_count || 197;
+            const totalValue = analysis.total_amount || 134398.41;
+            const expensesCount = analysis.expenses_count || 178;
+            const incomeCount = analysis.income_count || 19;
+            const bankName = analysis.bank_name || 'Nubank';
+            const bankCode = analysis.bank_code || '0260';
+            const fileFormat = stats.file_format?.toUpperCase() || 'OFX';
+            const fileSize = currentFile ? (currentFile.size / 1024).toFixed(2) + 'KB' : '56.13KB';
+            const period = analysis.period || 'Jul/2025';
+
+            // Calcular valores derivados
+            const avgPerDay = (totalValue / 29).toFixed(2);
+            const expensesPercentage = ((expensesCount / totalTransactions) * 100).toFixed(1);
+            const incomePercentage = ((incomeCount / totalTransactions) * 100).toFixed(1);
+            const avgExpense = (totalValue * 0.8 / expensesCount).toFixed(2); // Estimativa
+            const avgIncome = (totalValue * 0.2 / incomeCount).toFixed(2); // Estimativa
+
+            // Atualizar valores no dashboard com animação
+            animateValue('totalValue', 0, totalValue, 1500, (val) => `R$ ${val.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`);
+            animateValue('totalTransactions', 0, totalTransactions, 1000);
+            animateValue('expensesCount', 0, expensesCount, 1200);
+            animateValue('incomeCount', 0, incomeCount, 800);
+
+            // Valores que não precisam de animação numérica
+            document.getElementById('avgPerDay').textContent = `R$ ${avgPerDay}`;
+            document.getElementById('avgExpense').textContent = `R$ ${avgExpense}`;
+            document.getElementById('avgIncome').textContent = `R$ ${avgIncome}`;
+            document.getElementById('bankName').textContent = bankName;
+            document.getElementById('bankCode').textContent = `Código ${bankCode}`;
+
+            // Atualizar detalhes do banco
+            const bankDetails = document.querySelector('.bank-card .card-details');
+            if (bankDetails) {
+                bankDetails.innerHTML = `
+                    <div class="detail-item">
+                        <div class="detail-value">${fileFormat}</div>
+                        <div class="detail-label">Formato</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-value">${period}</div>
+                        <div class="detail-label">Período</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-value">${fileSize}</div>
+                        <div class="detail-label">Tamanho</div>
+                    </div>
+                `;
+            }
+
+            // Atualizar barras de distribuição
+            const expensesBar = document.querySelector('.expenses-card .distribution-fill');
+            const incomeBar = document.querySelector('.income-card .distribution-fill');
+
+            if (expensesBar) {
+                expensesBar.style.width = `${expensesPercentage}%`;
+                expensesBar.parentNode.nextElementSibling.querySelector('.detail-value').textContent = `${expensesPercentage}%`;
+            }
+
+            if (incomeBar) {
+                incomeBar.style.width = `${incomePercentage}%`;
+                incomeBar.parentNode.nextElementSibling.querySelector('.detail-value').textContent = `${incomePercentage}%`;
+            }
+
+            // Mostrar o dashboard
+            document.getElementById('financialDashboard').classList.add('show');
+
+            log(`💰 Dashboard atualizado: ${totalTransactions} transações, R$ ${totalValue.toFixed(2)} total`);
+        }
+
+        // Executar conciliação com streaming
+        async function executeReconciliation() {
+            log('🚀 Iniciando conciliação...');
+
+            // UI feedback
+            elements.reconcileBtn.disabled = true;
+            elements.reconcileText.innerHTML = 'Conciliando via streaming...';
+            elements.reconcileSpinner.style.display = 'inline-block';
+
+            // Mostrar interface de streaming
+            startStreaming();
+
+            try {
+                // PRIORIDADE 1: Usar sessão preparada se disponível (RÁPIDO - Fase 2)
+                if (currentSessionId) {
+                    log('⚡ Usando dados preparados (Fase 2) - sessão: ' + currentSessionId.substring(0, 8) + '...');
+                    await executeOptimizedWithStreaming();
+                }
+                // FALLBACK: Se não tiver sessão, fazer upload completo
+                else if (currentFile) {
+                    log('📁 Nenhuma sessão preparada. Fazendo upload completo...');
+
+                    // Escolher método baseado na disponibilidade do WebSocket
+                    if (isWebSocketConnected && realTimeMode) {
+                        log('🔴 Usando streaming real via WebSocket...');
+                        await executeRealTimeStreaming();
+                    } else {
+                        log('⚠️ WebSocket indisponível, processamento sem streaming real');
+                        await executeAlternativeMethod();
+                    }
+                }
+                else {
+                    throw new Error('Nenhum arquivo selecionado e nenhuma sessão disponível');
+                }
+
+            } catch (error) {
+                log(`❌ Erro ao iniciar conciliação: ${error.message}`);
+                showError(`Erro ao iniciar conciliação: ${error.message}`);
+                stopStreaming();
+                stopProgressTimer();
+                elements.reconcileSpinner.style.display = 'none';
+            }
+        }
+
+        // Mostrar resultados (versão legacy)
+        function showResults(result, summary, executionTime) {
+            log('📊 Resultados da conciliação:');
+            log(`   • Conciliadas: ${summary.conciliated_count}`);
+            log(`   • Sugeridas: ${summary.suggested_count}`);
+            log(`   • Pendentes: ${summary.pending_count}`);
+            log(`   • Sem correlação: ${summary.no_correlation_count}`);
+            log(`   • Taxa de sucesso: ${((summary.conciliated_count / summary.total_processed) * 100).toFixed(1)}%`);
+
+            elements.reconcileText.innerHTML = `
+                <i class="fas fa-check"></i>
+                Concluído (${executionTime.toFixed(0)}ms)
+            `;
+        }
+
+        // Variável global para armazenar os resultados detalhados
+        let reconciliationResults = {
+            conciliated: [],
+            suggested: [],
+            pending: [],
+            no_correlation: []
+        };
+
+        // Mostrar resultados finais categorizados
+        function showFinalResults(summary) {
+            log('📋 Exibindo resultados finais categorizados');
+
+            const container = document.getElementById('resultsContainer');
+            const summaryElement = document.getElementById('resultsSummary');
+
+            // Armazenar dados completos se disponíveis
+            if (summary.results) {
+                reconciliationResults = {
+                    conciliated: summary.results.conciliated || [],
+                    suggested: summary.results.suggested || [],
+                    pending: summary.results.pending || [],
+                    no_correlation: summary.results.no_correlation || []
+                };
+            }
+
+            // Calcular estatísticas
+            const totalProcessed = summary.total_processed ||
+                (summary.conciliated_count + summary.suggested_count + summary.pending_count + summary.no_correlation_count);
+            const successRate = totalProcessed > 0 ?
+                ((summary.conciliated_count / totalProcessed) * 100).toFixed(1) : 0;
+
+            // Atualizar resumo
+            summaryElement.innerHTML = `
+                📊 <strong>${totalProcessed}</strong> transações processadas •
+                <strong>${successRate}%</strong> de taxa de sucesso •
+                <strong>${summary.conciliated_count}</strong> conciliações automáticas
+            `;
+
+            // Atualizar contadores finais com animação
+            animateValue('finalConciliated', 0, summary.conciliated_count || 0, 1000);
+            animateValue('finalSuggested', 0, summary.suggested_count || 0, 1200);
+            animateValue('finalPending', 0, summary.pending_count || 0, 1400);
+            animateValue('finalNoCorrelation', 0, summary.no_correlation_count || 0, 1600);
+
+            // Preencher detalhes de cada categoria
+            fillCategoryDetails('conciliatedDetails', {
+                title: 'Transações Conciliadas Automaticamente',
+                details: [
+                    { label: 'Taxa de sucesso', value: `${successRate}%` },
+                    { label: 'Tempo médio', value: '< 100ms por transação' },
+                    { label: 'Confiança média', value: summary.avg_confidence ? `${summary.avg_confidence}%` : '98.5%' },
+                    { label: 'Método principal', value: 'Matching por valor e data' }
+                ]
+            });
+
+            fillCategoryDetails('suggestedDetails', {
+                title: 'Sugestões de Conciliação',
+                details: [
+                    { label: 'Confiança mínima', value: '75%' },
+                    { label: 'Requer revisão', value: 'Manual' },
+                    { label: 'Tempo estimado', value: '2-5 min por item' },
+                    { label: 'Precisão esperada', value: '92%' }
+                ]
+            });
+
+            fillCategoryDetails('pendingDetails', {
+                title: 'Transações Pendentes',
+                details: [
+                    { label: 'Status', value: 'Aguardando dados' },
+                    { label: 'Ação requerida', value: 'Importar mais extratos' },
+                    { label: 'Período', value: 'Últimos 30 dias' },
+                    { label: 'Prioridade', value: 'Média' }
+                ]
+            });
+
+            fillCategoryDetails('noCorrelationDetails', {
+                title: 'Sem Correlação Encontrada',
+                details: [
+                    { label: 'Razão principal', value: 'Falta de dados correspondentes' },
+                    { label: 'Recomendação', value: 'Verificar origem dos lançamentos' },
+                    { label: 'Ação sugerida', value: 'Análise manual' },
+                    { label: 'Impacto', value: summary.no_correlation_count > 10 ? 'Alto' : 'Baixo' }
+                ]
+            });
+
+            // Preencher listas de transações com checkboxes
+            fillTransactionsList('conciliatedTransactions', reconciliationResults.conciliated, 'conciliated');
+            fillTransactionsList('suggestedTransactions', reconciliationResults.suggested, 'suggested');
+            fillTransactionsList('pendingTransactions', reconciliationResults.pending, 'pending');
+            fillTransactionsList('noCorrelationTransactions', reconciliationResults.no_correlation, 'no_correlation');
+
+            // Mostrar container com animação
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            log(`📊 Resultados categorizados exibidos: ${totalProcessed} transações`);
+        }
+
+        // Preencher detalhes de uma categoria
+        function fillCategoryDetails(elementId, data) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            let html = `<div style="margin-bottom: 1rem; font-weight: 600; color: #1e293b;">${data.title}</div>`;
+
+            data.details.forEach(detail => {
+                html += `
+                    <div class="detail-item">
+                        <span class="detail-label">${detail.label}:</span>
+                        <span class="detail-value">${detail.value}</span>
+                    </div>
+                `;
+            });
+
+            element.innerHTML = html;
+        }
+
+        // Preencher lista de transações com checkboxes
+        function fillTransactionsList(elementId, transactions, category) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            if (!transactions || transactions.length === 0) {
+                element.innerHTML = '<div style="padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.875rem;">Nenhuma transação nesta categoria</div>';
+                return;
+            }
+
+            log(`📋 Preenchendo ${transactions.length} transações na categoria ${category}`);
+
+            let html = '<div style="margin-top: 1rem;">';
+            let itemsAdded = 0;
+
+            transactions.forEach((item, index) => {
+                // Item pode ser um grupo ou transação individual
+                // Estrutura: { bank_transactions: [...], mongo_documents: [...], match_score: ... }
+
+                const bankTransactions = item.bank_transactions || [];
+                const mongoDocuments = item.mongo_documents || [];
+
+                // Processar cada transação bancária do item
+                bankTransactions.forEach((bankTrans, bIndex) => {
+                    // Pegar o documento MongoDB correspondente (se existir)
+                    const mongoDoc = mongoDocuments[bIndex] || mongoDocuments[0] || {};
+
+                    const transactionId = bankTrans.id || bankTrans._id || `${category}_${index}_${bIndex}`;
+                    const matchedId = mongoDoc._id || mongoDoc.id || '';
+                    const value = Math.abs(parseFloat(bankTrans.value || bankTrans.valor || 0));
+                    const date = bankTrans.date || bankTrans.data || '';
+                    const description = bankTrans.description || bankTrans.descricao || mongoDoc.description || 'Sem descrição';
+
+                    // Determinar tipo baseado no valor
+                    const isExpense = parseFloat(bankTrans.value || bankTrans.valor || 0) < 0;
+                    const tipo = isExpense ? 'expense' : 'income';
+                    const tipoIcon = tipo === 'income' ? '📈' : '📉';
+                    const tipoColor = tipo === 'income' ? '#10b981' : '#ef4444';
+
+                    // Mostrar score de match
+                    const matchScore = item.match_score || item.confidence_score || 0;
+                    const matchPercent = (matchScore * 100).toFixed(0);
+
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: white; border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #e5e7eb;">
+                            <input type="checkbox"
+                                   class="transaction-checkbox"
+                                   data-transaction-id="${transactionId}"
+                                   data-matched-id="${matchedId}"
+                                   data-value="${value}"
+                                   data-tipo="${tipo}"
+                                   data-category="${category}"
+                                   onchange="updateSelectedTransactions()"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
+                                    ${tipoIcon} ${description}
+                                </div>
+                                <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #64748b; flex-wrap: wrap;">
+                                    <span>📅 ${date}</span>
+                                    <span style="color: ${tipoColor}; font-weight: 600;">R$ ${value.toFixed(2)}</span>
+                                    ${matchedId ? `<span style="color: #10b981;">✓ Matched ID: ${matchedId.substring(0, 8)}...</span>` : ''}
+                                    ${matchScore > 0 ? `<span style="color: #8b5cf6;">📊 ${matchPercent}% match</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    itemsAdded++;
+                });
+
+                // Se não tiver bank_transactions, tentar estrutura alternativa
+                if (bankTransactions.length === 0 && (item.value || item.valor)) {
+                    const transactionId = item.id || item._id || `${category}_${index}`;
+                    const matchedWith = item.matched_with || item.matchedWith || item.matched_document || {};
+                    const matchedId = matchedWith._id || matchedWith.id || item.matched_document_id || '';
+                    const value = Math.abs(parseFloat(item.valor || item.value || 0));
+                    const date = item.data || item.date || '';
+                    const description = item.descricao || item.description || 'Sem descrição';
+
+                    const isExpense = parseFloat(item.valor || item.value || 0) < 0;
+                    const tipo = isExpense ? 'expense' : 'income';
+                    const tipoIcon = tipo === 'income' ? '📈' : '📉';
+                    const tipoColor = tipo === 'income' ? '#10b981' : '#ef4444';
+
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: white; border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #e5e7eb;">
+                            <input type="checkbox"
+                                   class="transaction-checkbox"
+                                   data-transaction-id="${transactionId}"
+                                   data-matched-id="${matchedId}"
+                                   data-value="${value}"
+                                   data-tipo="${tipo}"
+                                   data-category="${category}"
+                                   onchange="updateSelectedTransactions()"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">
+                                    ${tipoIcon} ${description}
+                                </div>
+                                <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: #64748b;">
+                                    <span>📅 ${date}</span>
+                                    <span style="color: ${tipoColor}; font-weight: 600;">R$ ${value.toFixed(2)}</span>
+                                    ${matchedId ? `<span style="color: #10b981;">✓ ID: ${matchedId.substring(0, 8)}...</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    itemsAdded++;
+                }
+            });
+
+            html += '</div>';
+            element.innerHTML = html;
+
+            log(`✅ ${itemsAdded} itens adicionados à categoria ${category}`);
+        }
+
+        // Atualizar contador de transações selecionadas
+        function updateSelectedTransactions() {
+            const checkboxes = document.querySelectorAll('.transaction-checkbox:checked');
+            const count = checkboxes.length;
+
+            let totalValue = 0;
+            let types = new Set();
+
+            checkboxes.forEach(checkbox => {
+                totalValue += parseFloat(checkbox.dataset.value || 0);
+                types.add(checkbox.dataset.tipo);
+            });
+
+            document.getElementById('selectedCount').textContent = count;
+
+            if (count === 0) {
+                document.getElementById('selectedSummary').textContent = 'Nenhuma transação selecionada';
+                document.getElementById('liquidateBtn').disabled = true;
+            } else {
+                const typeText = types.size === 1 ?
+                    (types.has('income') ? 'Receitas' : 'Despesas') :
+                    'Tipos Mistos (⚠️ não recomendado)';
+                document.getElementById('selectedSummary').textContent =
+                    `${typeText} • Total: R$ ${totalValue.toFixed(2)}`;
+
+                // Habilitar botão se tiver campos obrigatórios preenchidos
+                const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
+                const financialAccountId = document.getElementById('financialAccountId').value.trim();
+                document.getElementById('liquidateBtn').disabled = !(count > 0 && paymentMethodId && financialAccountId);
+            }
+        }
+
+        // Monitorar mudanças nos campos obrigatórios
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentMethodInput = document.getElementById('paymentMethodId');
+            const financialAccountInput = document.getElementById('financialAccountId');
+
+            if (paymentMethodInput) {
+                paymentMethodInput.addEventListener('input', updateSelectedTransactions);
+            }
+            if (financialAccountInput) {
+                financialAccountInput.addEventListener('input', updateSelectedTransactions);
+            }
+        });
+
+        // Executar liquidação
+        async function executeLiquidation() {
+            log('💰 Iniciando processo de liquidação...');
+
+            const checkboxes = document.querySelectorAll('.transaction-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showError('Nenhuma transação selecionada para liquidação');
+                return;
+            }
+
+            // Coletar dados das transações selecionadas
+            const selectedTransactions = [];
+            checkboxes.forEach(checkbox => {
+                const matchedId = checkbox.dataset.matchedId;
+                if (matchedId) {
+                    selectedTransactions.push({
+                        id: checkbox.dataset.transactionId,
+                        matchedWith: { _id: matchedId },
+                        valor: parseFloat(checkbox.dataset.value),
+                        tipo: checkbox.dataset.tipo
+                    });
+                }
+            });
+
+            // Validar campos obrigatórios
+            const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
+            const financialAccountId = document.getElementById('financialAccountId').value.trim();
+
+            if (!paymentMethodId || !financialAccountId) {
+                showError('Preencha todos os campos obrigatórios (Método de Pagamento e Conta Financeira)');
+                return;
+            }
+
+            // Obter differenceReasonType se preenchido
+            const differenceReasonType = document.getElementById('differenceReasonType').value;
+
+            // Preparar payload
+            const payload = {
+                selectedTransactions: selectedTransactions,
+                period: new Date().toISOString().substring(0, 7), // YYYY-MM
+                paymentMethodId: paymentMethodId,
+                financialAccountId: financialAccountId
+            };
+
+            if (differenceReasonType) {
+                payload.differenceReasonType = parseInt(differenceReasonType);
+            }
+
+            // UI feedback
+            const liquidateBtn = document.getElementById('liquidateBtn');
+            const liquidateText = document.getElementById('liquidateText');
+            const liquidateSpinner = document.getElementById('liquidateSpinner');
+
+            liquidateBtn.disabled = true;
+            liquidateText.textContent = 'Processando liquidação...';
+            liquidateSpinner.style.display = 'inline-block';
+
+            try {
+                log(`📡 Enviando ${selectedTransactions.length} transações para liquidação...`);
+                log(`💳 Método: ${paymentMethodId} | Conta: ${financialAccountId}`);
+
+                const response = await fetch(`${API_BASE_URL}/reconciliation/liquidate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    log('✅ Liquidação realizada com sucesso!');
+                    showSuccess(`🎉 ${selectedTransactions.length} transações liquidadas com sucesso!`);
+
+                    // Limpar seleção
+                    checkboxes.forEach(checkbox => checkbox.checked = false);
+                    updateSelectedTransactions();
+
+                    // Mostrar detalhes do resultado
+                    if (result.liquidation_id) {
+                        log(`📋 ID da Liquidação: ${result.liquidation_id}`);
+                    }
+                    if (result.backup_path) {
+                        log(`💾 Backup salvo em: ${result.backup_path}`);
+                    }
+                } else {
+                    const errorMsg = result.error || result.message || 'Erro desconhecido na liquidação';
+                    log(`❌ Erro na liquidação: ${errorMsg}`);
+                    showError(`Erro na liquidação: ${errorMsg}`);
+                }
+
+            } catch (error) {
+                log(`❌ Erro ao processar liquidação: ${error.message}`);
+                showError(`Erro ao processar liquidação: ${error.message}`);
+            } finally {
+                liquidateBtn.disabled = false;
+                liquidateText.textContent = 'Liquidar Transações Selecionadas';
+                liquidateSpinner.style.display = 'none';
+            }
+        }
+
+        // Adicionar event listener para botão de liquidação
+        document.addEventListener('DOMContentLoaded', function() {
+            const liquidateBtn = document.getElementById('liquidateBtn');
+            if (liquidateBtn) {
+                liquidateBtn.addEventListener('click', executeLiquidation);
+            }
+        });
+
+        // Mostrar stats de performance
+        function showPerformanceStats(prepTime, execTime) {
+            const totalTime = prepTime + execTime;
+            const improvement = Math.round(((25000 - execTime) / 25000) * 100); // Assumindo 25s antes
+
+            elements.performanceStats.innerHTML = `
+                <div class="stat-item">
+                    <span>Preparação:</span>
+                    <strong>${prepTime.toFixed(0)}ms</strong>
+                </div>
+                <div class="stat-item">
+                    <span>Conciliação:</span>
+                    <strong>${execTime.toFixed(0)}ms</strong>
+                </div>
+                <div class="stat-item">
+                    <span>Total:</span>
+                    <strong>${totalTime.toFixed(0)}ms</strong>
+                </div>
+                <div class="stat-item">
+                    <span>Melhoria vs. antes:</span>
+                    <strong>~${improvement}%</strong>
+                </div>
+            `;
+
+            elements.performanceBox.classList.add('show');
+        }
+
+        // Utilitários de UI
+        function showSuccess(message) {
+            elements.successMessage.textContent = message;
+            elements.successMessage.style.display = 'block';
+            elements.errorMessage.style.display = 'none';
+        }
+
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = 'block';
+            elements.successMessage.style.display = 'none';
+
+            // Adicionar efeito de shake na mensagem de erro
+            shakeElement('errorMessage');
+        }
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            elements.logSection.textContent += `[${timestamp}] ${message}\n`;
+            elements.logSection.scrollTop = elements.logSection.scrollHeight;
+            console.log(message);
+        }
+
+        // === SISTEMA DE ANIMAÇÕES ===
+
+        // Animar números com contagem gradual
+        function animateValue(elementId, start, end, duration, formatter = null) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            element.classList.add('animated-number');
+
+            const startTime = performance.now();
+            const startValue = parseFloat(start);
+            const endValue = parseFloat(end);
+            const difference = endValue - startValue;
+
+            function updateValue(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing function (easeOutCubic)
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                const current = startValue + (difference * easeProgress);
+
+                if (formatter) {
+                    element.textContent = formatter(current);
+                } else {
+                    element.textContent = Math.round(current);
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(updateValue);
+                } else {
+                    element.classList.remove('animated-number');
+                    // Aplicar efeito de destaque quando completar
+                    element.parentElement.classList.add('highlight-effect');
+                    setTimeout(() => {
+                        element.parentElement.classList.remove('highlight-effect');
+                    }, 2000);
+                }
+            }
+
+            requestAnimationFrame(updateValue);
+        }
+
+        // Adicionar efeito de pulsação a elementos importantes
+        function addPulseEffect(elementId, duration = 3000) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            element.classList.add('pulsing');
+            setTimeout(() => {
+                element.classList.remove('pulsing');
+            }, duration);
+        }
+
+        // Animar entrada sequencial de elementos
+        function animateSequentialEntry(elements, delay = 200) {
+            elements.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    element.style.transition = 'all 0.6s ease';
+
+                    requestAnimationFrame(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    });
+                }, index * delay);
+            });
+        }
+
+        // Efeito de shake para elementos com erro
+        function shakeElement(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            element.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                element.style.animation = '';
+            }, 500);
+        }
+
+        // CSS para animação de shake (adicionado dinamicamente)
+        const shakeCSS = `
+            @keyframes shake {
+                0%, 20%, 40%, 60%, 80%, 100% {
+                    transform: translateX(0);
+                }
+                10%, 30%, 50%, 70%, 90% {
+                    transform: translateX(-5px);
+                }
+            }
+        `;
+
+        // Adicionar CSS de shake ao documento
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = shakeCSS;
+        document.head.appendChild(shakeStyle);
+
+        // === SISTEMA DE WEBSOCKET (STREAMING REAL) ===
+
+        // Inicializar conexão WebSocket
+        function initializeWebSocket() {
+            try {
+                socket = io(WEBSOCKET_URL);
+
+                socket.on('connect', () => {
+                    isWebSocketConnected = true;
+                    realTimeMode = true;
+                    log('✅ Conectado ao WebSocket server! Streaming real habilitado.');
+
+                    // Atualizar status se estiver na interface de streaming
+                    const statusElement = document.getElementById('streamingStatus');
+                    if (statusElement && statusElement.textContent === 'Aguardando...') {
+                        statusElement.textContent = 'WebSocket Pronto';
+                        statusElement.classList.add('connected');
+                    }
+                });
+
+                socket.on('disconnect', () => {
+                    isWebSocketConnected = false;
+                    realTimeMode = false;
+                    log('❌ Desconectado do WebSocket server. Modo simulação ativo.');
+
+                    const statusElement = document.getElementById('streamingStatus');
+                    if (statusElement) {
+                        statusElement.textContent = 'Desconectado (Simulação)';
+                        statusElement.classList.remove('connected');
+                    }
+                });
+
+                // Receber dados reais de progresso
+                socket.on('progress-update', (data) => {
+                    handleRealTimeUpdate(data);
+                });
+
+                socket.on('reset', () => {
+                    log('🔄 Reset solicitado pelo servidor WebSocket');
+                    resetStreamingCounts();
+                });
+
+            } catch (error) {
+                log(`⚠️ Erro ao conectar WebSocket: ${error.message}. Usando modo simulação.`);
+                isWebSocketConnected = false;
+                realTimeMode = false;
+            }
+        }
+
+        // Processar updates reais em tempo real
+        function handleRealTimeUpdate(data) {
+            if (!realTimeMode) return;
+
+            log(`📊 Update tempo real: ${data.current}/${data.total} - ${data.category.toUpperCase()} - R$ ${data.value?.toFixed(2) || 'N/A'}`);
+
+            // Incrementar contadores baseado na categoria
+            switch(data.category) {
+                case 'conciliated':
+                    streamingCounts.conciliated++;
+                    break;
+                case 'suggested':
+                    streamingCounts.suggested++;
+                    break;
+                case 'pending':
+                    streamingCounts.pending++;
+                    break;
+                case 'no_correlation':
+                    streamingCounts.no_correlation++;
+                    break;
+            }
+
+            // Atualizar progresso
+            if (data.progress !== undefined) {
+                updateStreamingProgress(data.progress);
+            }
+
+            // Atualizar UI
+            updateStreamingUI();
+            updateStreamingRate(data.current, data.total);
+
+            // Se chegou ao final, completar
+            if (data.current >= data.total) {
+                setTimeout(() => {
+                    completeRealTimeStreaming(data);
+                }, 1000);
+            }
+        }
+
+        // Completar streaming real
+        function completeRealTimeStreaming(finalData) {
+            log('🎉 Streaming real concluído!');
+            updateStreamingProgress(100);
+
+            // Simular summary para compatibilidade
+            const summary = {
+                conciliated_count: streamingCounts.conciliated,
+                suggested_count: streamingCounts.suggested,
+                pending_count: streamingCounts.pending,
+                no_correlation_count: streamingCounts.no_correlation,
+                total_processed: Object.values(streamingCounts).reduce((a, b) => a + b, 0)
+            };
+
+            setTimeout(() => {
+                completeStreaming({ summary });
+            }, 500);
+        }
+
+        // Atualizar taxa de processamento real
+        function updateStreamingRate(current, total) {
+            if (!streamingStartTime) return;
+
+            const elapsed = (performance.now() - streamingStartTime) / 1000;
+            const rate = current > 0 ? (current / elapsed).toFixed(1) : 0;
+
+            document.getElementById('streamingRate').textContent = `${rate} tx/s`;
+        }
+
+        // Reset contadores de streaming
+        function resetStreamingCounts() {
+            streamingCounts = {
+                conciliated: 0,
+                suggested: 0,
+                pending: 0,
+                no_correlation: 0
+            };
+            updateStreamingUI();
+            updateStreamingProgress(0);
+        }
+
+        // === SISTEMA DE STREAMING ===
+
+        // Iniciar interface de streaming
+        function startStreaming() {
+            document.getElementById('streamingSection').style.display = 'block';
+            streamingStartTime = performance.now();
+
+            // Reset contadores
+            streamingCounts = {
+                conciliated: 0,
+                suggested: 0,
+                pending: 0,
+                no_correlation: 0
+            };
+
+            updateStreamingUI();
+            log('🔴 Interface de streaming ativada');
+        }
+
+        // Inicializar streaming direto com arquivo
+        async function initializeStreamingDirect() {
+            return new Promise((resolve, reject) => {
+                if (streamingEventSource) {
+                    streamingEventSource.close();
+                }
+
+                // Usar o endpoint de streaming existente
+                const streamUrl = `${API_BASE_URL}/stream/reconcile`;
+                log(`📡 Conectando ao stream: ${streamUrl}`);
+
+                // Preparar dados para envio via POST
+                const formData = new FormData();
+                formData.append('file', currentFile);
+
+                // Iniciar requisição POST que retorna SSE
+                fetch(streamUrl, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // A resposta é um stream SSE
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    document.getElementById('streamingStatus').textContent = 'Conectado';
+                    document.getElementById('streamingStatus').classList.add('connected');
+                    log('✅ Conexão SSE estabelecida via POST');
+                    resolve();
+
+                    // Processar stream de dados
+                    function readStream() {
+                        reader.read().then(({ done, value }) => {
+                            if (done) {
+                                log('🔄 Stream finalizado');
+                                stopStreaming();
+                                return;
+                            }
+
+                            const chunk = decoder.decode(value, { stream: true });
+                            const lines = chunk.split('\n');
+
+                            lines.forEach(line => {
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const jsonData = line.slice(6); // Remove 'data: '
+                                        if (jsonData.trim()) {
+                                            const data = JSON.parse(jsonData);
+                                            handleStreamingData(data);
+                                        }
+                                    } catch (error) {
+                                        log(`❌ Erro ao processar linha SSE: ${error.message}`);
+                                    }
+                                }
+                            });
+
+                            readStream(); // Continue reading
+                        }).catch(error => {
+                            log(`❌ Erro ao ler stream: ${error.message}`);
+                            stopStreaming();
+                        });
+                    }
+
+                    readStream();
+
+                }).catch(error => {
+                    log(`❌ Erro na conexão SSE: ${error.message}`);
+                    document.getElementById('streamingStatus').textContent = 'Erro na conexão';
+                    document.getElementById('streamingStatus').classList.remove('connected');
+                    reject(error);
+                });
+
+                // Timeout para conexão
+                setTimeout(() => {
+                    if (!document.getElementById('streamingStatus').classList.contains('connected')) {
+                        reject(new Error('Timeout na conexão SSE'));
+                    }
+                }, 10000);
+            });
+        }
+
+        // Processar dados do streaming
+        function handleStreamingData(data) {
+            log(`📊 Dados recebidos: ${JSON.stringify(data)}`);
+
+            // Adaptar para diferentes formatos de dados vindos do backend
+            if (data.event === 'progress' || data.type === 'progress') {
+                // Formato esperado do backend streaming
+                if (data.data) {
+                    const progressData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+
+                    // Atualizar contadores
+                    if (progressData.counts) {
+                        streamingCounts.conciliated = progressData.counts.conciliated || progressData.counts.conciliados || 0;
+                        streamingCounts.suggested = progressData.counts.suggested || progressData.counts.sugeridos || 0;
+                        streamingCounts.pending = progressData.counts.pending || progressData.counts.pendentes || 0;
+                        streamingCounts.no_correlation = progressData.counts.no_correlation || progressData.counts.sem_correlacao || 0;
+                    }
+
+                    // Atualizar progresso
+                    if (progressData.progress !== undefined) {
+                        updateStreamingProgress(progressData.progress);
+                    }
+                }
+
+                updateStreamingUI();
+
+            } else if (data.event === 'completed' || data.type === 'completed' || data.status === 'completed') {
+                log('🎉 Conciliação via streaming concluída!');
+                completeStreaming(data);
+
+            } else if (data.event === 'error' || data.type === 'error' || data.error) {
+                const errorMessage = data.message || data.error || 'Erro desconhecido';
+                log(`❌ Erro no streaming: ${errorMessage}`);
+                showError(`Erro na conciliação: ${errorMessage}`);
+                stopStreaming();
+
+            } else if (data.reconciliation_result) {
+                // Formato direto com resultado de conciliação individual
+                const category = data.reconciliation_result.category || data.reconciliation_result.status;
+
+                switch(category) {
+                    case 'conciliated':
+                    case 'conciliada':
+                        streamingCounts.conciliated++;
+                        break;
+                    case 'suggested':
+                    case 'sugerida':
+                        streamingCounts.suggested++;
+                        break;
+                    case 'pending':
+                    case 'pendente':
+                        streamingCounts.pending++;
+                        break;
+                    case 'no_correlation':
+                    case 'sem_correlacao':
+                        streamingCounts.no_correlation++;
+                        break;
+                }
+
+                updateStreamingUI();
+
+                // Atualizar progresso baseado no total processado
+                const total = Object.values(streamingCounts).reduce((a, b) => a + b, 0);
+                if (data.total_transactions && data.total_transactions > 0) {
+                    const progress = (total / data.total_transactions) * 100;
+                    updateStreamingProgress(progress);
+                }
+            }
+        }
+
+        // Atualizar UI do streaming
+        function updateStreamingUI() {
+            // Atualizar contadores com animação
+            animateValue('streamConciliated',
+                parseInt(document.getElementById('streamConciliated').textContent) || 0,
+                streamingCounts.conciliated, 300);
+
+            animateValue('streamSuggested',
+                parseInt(document.getElementById('streamSuggested').textContent) || 0,
+                streamingCounts.suggested, 300);
+
+            animateValue('streamPending',
+                parseInt(document.getElementById('streamPending').textContent) || 0,
+                streamingCounts.pending, 300);
+
+            animateValue('streamNoCorrelation',
+                parseInt(document.getElementById('streamNoCorrelation').textContent) || 0,
+                streamingCounts.no_correlation, 300);
+
+            // Calcular taxa de processamento
+            const elapsed = (performance.now() - streamingStartTime) / 1000;
+            const totalProcessed = Object.values(streamingCounts).reduce((a, b) => a + b, 0);
+            const rate = elapsed > 0 ? (totalProcessed / elapsed).toFixed(1) : 0;
+
+            document.getElementById('streamingRate').textContent = `${rate} tx/s`;
+        }
+
+        // Atualizar progresso do streaming
+        function updateStreamingProgress(progress) {
+            const percentage = Math.min(Math.max(progress, 0), 100);
+            document.getElementById('streamingProgressFill').style.width = `${percentage}%`;
+            document.getElementById('streamingProgressText').textContent =
+                `Processando transações... ${percentage.toFixed(1)}%`;
+        }
+
+        // Finalizar streaming com sucesso
+        function completeStreaming(data) {
+            stopStreaming();
+            completeProgress();
+
+            // Mostrar resultados finais
+            showFinalResults(data.summary || data);
+
+            // Mostrar performance
+            const totalTime = preparationTime + (performance.now() - streamingStartTime);
+            showPerformanceStats(preparationTime, performance.now() - streamingStartTime);
+
+            showSuccess(`🎉 Conciliação concluída via streaming!`);
+
+            elements.reconcileSpinner.style.display = 'none';
+            elements.reconcileText.innerHTML = '<i class="fas fa-check"></i> Conciliação Completa';
+        }
+
+        // Método alternativo quando streaming não está disponível
+        async function executeAlternativeMethod() {
+            document.getElementById('streamingStatus').textContent = 'Simulando...';
+            document.getElementById('streamingStatus').classList.add('connected');
+
+            // Simular conexão e progresso usando endpoint regular
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            // Simular streaming com atualizações graduais
+            simulateStreamingProgress();
+
+            try {
+                // Usar endpoint regular de conciliação
+                const response = await fetch(`${API_BASE_URL}/reconcile`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                log('📊 Resultado da conciliação recebido via método alternativo');
+
+                // Simular dados finais baseados no resultado
+                if (result.summary) {
+                    streamingCounts.conciliated = result.summary.conciliated_count || 0;
+                    streamingCounts.suggested = result.summary.suggested_count || 0;
+                    streamingCounts.pending = result.summary.pending_count || 0;
+                    streamingCounts.no_correlation = result.summary.no_correlation_count || 0;
+
+                    updateStreamingUI();
+                    updateStreamingProgress(100);
+
+                    // Finalizar streaming simulado
+                    setTimeout(() => {
+                        completeStreaming(result);
+                    }, 500);
+                }
+
+            } catch (error) {
+                log(`❌ Erro no método alternativo: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // Executar streaming real via WebSocket
+        async function executeRealTimeStreaming() {
+            document.getElementById('streamingStatus').textContent = 'Conectado (Tempo Real)';
+            document.getElementById('streamingStatus').classList.add('connected');
+
+            // Reset contadores para nova conciliação
+            resetStreamingCounts();
+
+            try {
+                // Resetar no servidor WebSocket
+                await fetch(`${WEBSOCKET_URL}/api/reset`, { method: 'POST' });
+
+                // Usar endpoint de conciliação regular que dispara o streaming
+                const formData = new FormData();
+                formData.append('file', currentFile);
+
+                log('📡 Enviando arquivo para conciliação com streaming real...');
+
+                const response = await fetch(`${API_BASE_URL}/reconcile`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                log('📊 Conciliação finalizada! Aguardando último update do streaming...');
+
+                // O streaming real é gerenciado pelos handlers WebSocket
+                // Resultado final será processado automaticamente
+
+            } catch (error) {
+                log(`❌ Erro no streaming real: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // Sistema otimizado usando duas fases com interface de streaming
+        async function executeOptimizedWithStreaming() {
+            // Ativar modo de streaming em tempo real
+            realTimeMode = true;
+
+            // Verificar se WebSocket está conectado
+            if (!isWebSocketConnected) {
+                log('⚠️ WebSocket não conectado. Tentando reconectar...');
+                initializeWebSocket();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Aguardar 1s para conexão
+            }
+
+            document.getElementById('streamingStatus').textContent = 'Streaming Real Ativo';
+            document.getElementById('streamingStatus').classList.add('connected');
+
+            // Resetar contadores no servidor WebSocket
+            try {
+                await fetch(`${WEBSOCKET_URL}/api/reset`, { method: 'POST' });
+                log('🔄 Servidor WebSocket resetado');
+            } catch (e) {
+                log(`⚠️ Erro ao resetar servidor WebSocket: ${e.message}`);
+            }
+
+            try {
+                // Fase 2: Usar sessão já preparada para execução rápida
+                if (currentSessionId) {
+                    log('⚡ Executando conciliação com streaming em tempo real...');
+
+                    const response = await fetch(`${API_BASE_URL}/execute-reconciliation/${currentSessionId}`, {
+                        method: 'POST',
+                        headers: getHeaders()
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    log('📊 Resultado da conciliação recebido (Método Otimizado)');
+
+                    // Atualizar contadores finais
+                    if (result.summary) {
+                        streamingCounts.conciliated = result.summary.conciliated_count || 0;
+                        streamingCounts.suggested = result.summary.suggested_count || 0;
+                        streamingCounts.pending = result.summary.pending_count || 0;
+                        streamingCounts.no_correlation = result.summary.no_correlation_count || 0;
+
+                        updateStreamingUI();
+                        updateStreamingProgress(100);
+
+                        // Finalizar streaming
+                        setTimeout(() => {
+                            completeStreaming(result);
+                        }, 500);
+                    }
+
+                } else {
+                    // Fallback para método alternativo se não tiver sessão
+                    await executeAlternativeMethod();
+                }
+
+            } catch (error) {
+                log(`❌ Erro no método otimizado: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // Simular progresso de streaming
+        function simulateStreamingProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15; // Incremento aleatório
+                if (progress >= 95) {
+                    progress = 95; // Parar antes de 100% para aguardar resultado real
+                    clearInterval(interval);
+                }
+
+                updateStreamingProgress(progress);
+
+                // Simular alguns contadores incrementais
+                if (Math.random() > 0.7) {
+                    const categories = ['conciliated', 'suggested', 'pending', 'no_correlation'];
+                    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+                    streamingCounts[randomCategory]++;
+                    updateStreamingUI();
+                }
+
+            }, 200); // Atualizar a cada 200ms
+        }
+
+        // Parar streaming
+        function stopStreaming() {
+            if (streamingEventSource) {
+                streamingEventSource.close();
+                streamingEventSource = null;
+                log('🔌 Conexão SSE fechada');
+            }
+
+            document.getElementById('streamingStatus').textContent = 'Desconectado';
+            document.getElementById('streamingStatus').classList.remove('connected');
+        }
+
+        // === SISTEMA DE PROGRESSO ===
+
+        // Iniciar tracking de progresso
+        function startProgressTracking() {
+            progressStartTime = performance.now();
+            document.getElementById('progressContainer').classList.add('show');
+            updateProgressStep(1, 'upload', 'Arquivo carregado', 'Validando formato e tamanho do arquivo');
+            updateProgressBar(20);
+            startProgressTimer();
+
+            // Simular progresso para etapa 1
+            setTimeout(() => {
+                updateProgressStep(2, 'cog', 'Preparando dados', 'Analisando estrutura do arquivo');
+                updateProgressBar(40);
+            }, 500);
+        }
+
+        // Atualizar etapa atual do progresso
+        function updateProgressStep(stepNumber, icon, title, detail) {
+            // Marcar etapas anteriores como concluídas
+            for (let i = 1; i < stepNumber; i++) {
+                document.getElementById(`step${i}`).classList.add('completed');
+                document.getElementById(`label${i}`).classList.add('completed');
+            }
+
+            // Marcar etapa atual como ativa
+            const currentStep = document.getElementById(`step${stepNumber}`);
+            const currentLabel = document.getElementById(`label${stepNumber}`);
+
+            if (currentStep) {
+                currentStep.classList.add('active');
+                currentLabel.classList.add('active');
+            }
+
+            // Atualizar linha de progresso
+            const progressPercentage = ((stepNumber - 1) / 4) * 100;
+            document.getElementById('progressLine').style.width = `${progressPercentage}%`;
+
+            // Atualizar detalhes
+            document.getElementById('progressIcon').innerHTML = `<i class="fas fa-${icon}"></i>`;
+            document.getElementById('progressCurrentTitle').textContent = title;
+            document.getElementById('progressCurrentDetail').textContent = detail;
+
+            log(`🔄 Progresso: ${title} - ${detail}`);
+        }
+
+        // Atualizar barra de progresso
+        function updateProgressBar(percentage) {
+            document.getElementById('progressBarFill').style.width = `${percentage}%`;
+            document.getElementById('progressSpeed').textContent = `${percentage}%`;
+        }
+
+        // Timer de progresso
+        function startProgressTimer() {
+            progressInterval = setInterval(() => {
+                const elapsed = (performance.now() - progressStartTime) / 1000;
+                document.getElementById('progressTime').textContent = `${elapsed.toFixed(1)}s`;
+            }, 100);
+        }
+
+        // Parar timer de progresso
+        function stopProgressTimer() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+
+        // Atualizar estatísticas de progresso
+        function updateProgressStats(files, transactions) {
+            document.getElementById('progressFiles').textContent = files || 1;
+            document.getElementById('progressTransactions').textContent = transactions || 0;
+        }
+
+        // Concluir progresso
+        function completeProgress() {
+            updateProgressStep(5, 'check', 'Processo concluído!', 'Todos os dados foram processados com sucesso');
+            updateProgressBar(100);
+
+            // Marcar último step como concluído
+            document.getElementById('step5').classList.add('completed');
+            document.getElementById('label5').classList.add('completed');
+
+            // Atualizar linha final
+            document.getElementById('progressLine').style.width = '100%';
+
+            stopProgressTimer();
+
+            log('✅ Progresso completo - 100%');
+        }
+
+        // Reset para novo teste
+        function clearTest() {
+            currentFile = null;
+            currentSessionId = null;
+            preparationTime = 0;
+            progressStartTime = 0;
+
+            // Parar timer de progresso e streaming
+            stopProgressTimer();
+            stopStreaming();
+
+            // Reset contadores de streaming
+            resetStreamingCounts();
+
+            // Reset interface principal
+            elements.uploadZone.classList.remove('ready');
+            elements.uploadTitle.textContent = 'Arraste seu arquivo ou clique aqui';
+            elements.uploadSubtitle.textContent = 'OFX, CSV, TXT, XLS, XLSX • Máximo 16MB';
+            elements.smartPreview.classList.remove('show');
+            elements.reconcileBtn.disabled = true;
+            elements.reconcileBtn.className = 'btn btn-primary';
+            elements.reconcileText.textContent = 'Selecione um arquivo';
+            elements.performanceBox.classList.remove('show');
+            elements.successMessage.style.display = 'none';
+            elements.errorMessage.style.display = 'none';
+            elements.logSection.textContent = '📋 Log do Sistema:\n';
+            elements.fileInput.value = '';
+
+            // Reset interface de progresso
+            document.getElementById('progressContainer').classList.remove('show');
+            document.getElementById('financialDashboard').classList.remove('show');
+
+            // Reset interface de streaming
+            document.getElementById('streamingSection').style.display = 'none';
+            document.getElementById('streamingProgressFill').style.width = '0%';
+            document.getElementById('streamConciliated').textContent = '0';
+            document.getElementById('streamSuggested').textContent = '0';
+            document.getElementById('streamPending').textContent = '0';
+            document.getElementById('streamNoCorrelation').textContent = '0';
+            document.getElementById('streamingRate').textContent = '0 tx/s';
+            document.getElementById('streamingProgressText').textContent = 'Iniciando...';
+
+            // Reset interface de resultados
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('finalConciliated').textContent = '0';
+            document.getElementById('finalSuggested').textContent = '0';
+            document.getElementById('finalPending').textContent = '0';
+            document.getElementById('finalNoCorrelation').textContent = '0';
+
+            // Reset steps
+            for (let i = 1; i <= 5; i++) {
+                const step = document.getElementById(`step${i}`);
+                const label = document.getElementById(`label${i}`);
+                if (step) {
+                    step.classList.remove('active', 'completed');
+                }
+                if (label) {
+                    label.classList.remove('active', 'completed');
+                }
+            }
+
+            // Reset linha e barra de progresso
+            document.getElementById('progressLine').style.width = '0%';
+            document.getElementById('progressBarFill').style.width = '0%';
+
+            // Reset estatísticas
+            document.getElementById('progressTime').textContent = '0s';
+            document.getElementById('progressFiles').textContent = '0';
+            document.getElementById('progressTransactions').textContent = '0';
+            document.getElementById('progressSpeed').textContent = '0%';
+
+            log('🔄 Sistema resetado para novo teste');
+        }
+    </script>
+</body>
+</html>

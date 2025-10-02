@@ -1,249 +1,145 @@
-# Frontend - Sistema de Conciliação Bancária
+# Conciliação Bancária - Frontend com Streaming
 
-## 📋 Descrição
-Interface web moderna e responsiva para upload e visualização de resultados de conciliação bancária.
+Frontend Node.js com WebSocket para exibição em tempo real da conciliação bancária.
 
-## 🚀 Funcionalidades
-
-### Upload de Arquivos
-- ✅ Drag & Drop intuitivo
-- ✅ Validação de formato (OFX, CSV, TXT, XLS)
-- ✅ Validação de tamanho (máx. 16MB)
-- ✅ Preview de informações do arquivo
-
-### Processamento
-- ✅ Barra de progresso em tempo real
-- ✅ Indicadores visuais de status
-- ✅ Tratamento de erros robusto
-
-### Visualização de Resultados
-- ✅ Dashboard com métricas resumidas
-- ✅ Tabelas organizadas por categoria
-- ✅ Sistema de abas para navegação
-- ✅ Badges coloridos para identificação
-- ✅ Suporte a grupos de transações
-
-### Recursos Extras
-- ✅ Download de relatórios em JSON
-- ✅ Modal de configurações da API
-- ✅ Sistema de ajuda integrado
-- ✅ Design responsivo para mobile
-- ✅ Verificação automática de status da API
-
-## 🛠️ Tecnologias Utilizadas
-
-- **HTML5** - Estrutura semântica
-- **CSS3** - Styling moderno com variáveis CSS
-- **JavaScript ES6+** - Lógica de interação
-- **Font Awesome** - Ícones vetoriais
-- **Fetch API** - Comunicação com backend
-
-## 📁 Estrutura de Arquivos
+## 📁 Estrutura
 
 ```
-frontend/
-├── index.html          # Página principal
-├── style.css           # Estilos CSS
-├── script.js           # Lógica JavaScript
-└── README.md           # Esta documentação
+conciliacao_bank/
+├── package.json          # Dependências Node.js
+├── server.js            # Servidor Express + WebSocket
+├── public/              # Arquivos estáticos
+│   └── index.html       # Interface do usuário
+└── .gitignore
 ```
 
-## 🔧 Como Usar
+## 🚀 Como funciona
 
-### 1. Preparar o Backend
-Certifique-se de que a API está rodando:
+1. **Frontend (este app)**: Servidor Node.js que:
+   - Serve a interface HTML
+   - Recebe updates do backend Python via HTTP POST
+   - Distribui updates para os clientes via WebSocket
+
+2. **Backend Python**: Envia atualizações de progresso para este servidor
+
+## 📦 Deploy no Render
+
+### Passo 1: Preparar o repositório
+
 ```bash
-cd src
-python api.py
+cd conciliacao_bank
+npm install
+git init
+git add .
+git commit -m "Initial commit"
 ```
-A API deve estar disponível em `http://localhost:5000`
 
-### 2. Abrir o Frontend
-Simplesmente abra o arquivo `index.html` em um navegador moderno, ou use um servidor local:
+### Passo 2: Criar repositório no GitHub
 
-#### Opção 1: Servidor Python
+Crie um repositório no GitHub e faça push:
+
 ```bash
-cd frontend
-python -m http.server 8000
+git remote add origin https://github.com/seu-usuario/conciliacao-bank-frontend.git
+git branch -M main
+git push -u origin main
 ```
-Acesse: `http://localhost:8000`
 
-#### Opção 2: Servidor Node.js
+### Passo 3: Deploy no Render
+
+1. Acesse [Render.com](https://render.com) e faça login
+2. Clique em **"New +"** → **"Web Service"**
+3. Conecte seu repositório GitHub
+4. Configure:
+   - **Name**: `conciliacao-bank-frontend`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Instance Type**: `Free`
+
+5. Clique em **"Create Web Service"**
+
+### Passo 4: Configurar variáveis de ambiente (opcional)
+
+Se quiser configurar a porta manualmente:
+- Adicione variável `PORT` (Render já configura automaticamente)
+
+### Passo 5: Obter a URL do frontend
+
+Após o deploy, você receberá uma URL tipo:
+```
+https://conciliacao-bank-frontend.onrender.com
+```
+
+### Passo 6: Configurar backend Python no Azure
+
+No backend Python (Azure), configure a URL para enviar updates após deploy do frontend:
+
+```python
+FRONTEND_WEBSOCKET_URL = "https://seu-frontend.onrender.com/api/progress-update"
+```
+
+**Backend Python atual**: `https://holdprintwebbankreconciliation-test.azurewebsites.net`
+
+## 🔧 Configuração local
+
+### Instalar dependências
 ```bash
-cd frontend
-npx serve .
+npm install
 ```
 
-#### Opção 3: Live Server (VS Code)
-Use a extensão "Live Server" do VS Code para servir os arquivos.
+### Rodar localmente
+```bash
+npm start
+```
 
-### 3. Usar a Interface
+O servidor estará disponível em `http://localhost:3000`
 
-1. **Upload**: Arraste um arquivo OFX/CSV/TXT/XLS ou clique para selecionar
-2. **Validação**: O sistema valida formato e tamanho automaticamente
-3. **Processamento**: Clique em "Iniciar Conciliação" e acompanhe o progresso
-4. **Resultados**: Visualize os dados nas abas organizadas
-5. **Download**: Baixe o relatório completo em JSON
+### Configurar para desenvolvimento local
 
-## 📊 Interface de Usuário
+No arquivo `public/index.html`, ajuste as URLs:
 
-### Header
-- Logo e título da aplicação
-- Indicador de status da API (Online/Offline)
-
-### Seção de Upload
-- Área de drag & drop responsiva
-- Informações do arquivo selecionado
-- Botões de ação (Upload/Limpar)
-
-### Seção de Progresso
-- Barra de progresso animada
-- Texto descritivo do estágio atual
-- Spinner de loading
-
-### Seção de Resultados
-- **Cards de Resumo**: Métricas principais com ícones coloridos
-- **Tabela de Conciliadas**: Transações encontradas no sistema
-- **Tabela de Não Conciliadas (Extrato)**: Transações sem correspondência
-- **Tabela de Não Conciliadas (Sistema)**: Documentos não utilizados
-
-### Footer
-- Informações de versão
-- Links para configurações e ajuda
-
-## 🎨 Design System
-
-### Cores
-- **Primária**: `#2563eb` (Azul)
-- **Sucesso**: `#10b981` (Verde)
-- **Aviso**: `#f59e0b` (Amarelo)
-- **Erro**: `#ef4444` (Vermelho)
-- **Info**: `#3b82f6` (Azul claro)
-
-### Tipografia
-- **Fonte**: Inter, system fonts
-- **Tamanhos**: Escala harmônica de 0.75rem a 2rem
-
-### Espaçamento
-- **Grid**: Sistema baseado em 0.25rem (4px)
-- **Containers**: Max-width 1200px centralizados
-
-### Componentes
-- **Botões**: Estados hover e disabled
-- **Cards**: Sombras sutis e bordas arredondadas
-- **Tabelas**: Zebra striping e hover effects
-- **Modais**: Overlay com blur de fundo
-
-## 📱 Responsividade
-
-O design é totalmente responsivo com breakpoints:
-
-- **Desktop**: > 768px (layout completo)
-- **Tablet**: 768px - 480px (adaptações)
-- **Mobile**: < 480px (layout simplificado)
-
-### Adaptações Mobile
-- Header empilhado verticalmente
-- Cards de resumo em coluna única
-- Tabelas com scroll horizontal
-- Abas com wrap automático
-
-## 🔧 Configurações
-
-### API Base URL
-Altere no arquivo `script.js`:
 ```javascript
-const API_BASE_URL = 'http://localhost:5000';
+const WEBSOCKET_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://localhost:5000'; // Backend Python local
 ```
 
-### Tamanhos e Limites
-```javascript
-// Tamanho máximo de arquivo (16MB)
-const maxSize = 16 * 1024 * 1024;
+## 📡 API Endpoints
 
-// Formatos aceitos
-const allowedTypes = ['.ofx', '.csv', '.txt', '.xls'];
+### POST /api/progress-update
+Recebe updates do backend Python e distribui via WebSocket
+
+**Body:**
+```json
+{
+  "current": 1,
+  "total": 100,
+  "category": "matched",
+  "value": "1000.00",
+  "document": "Doc 123"
+}
 ```
 
-## 🐛 Tratamento de Erros
+### POST /api/reset
+Reseta o estado e notifica clientes conectados
 
-### Tipos de Erro Tratados
-- ❌ API offline ou inacessível
-- ❌ Formato de arquivo inválido
-- ❌ Arquivo muito grande
-- ❌ Erro no processamento
-- ❌ Resposta inválida da API
+### GET /api/status
+Retorna status do servidor e clientes conectados
 
-### Feedback Visual
-- Mensagens de erro contextualizadas
-- Indicadores de status coloridos
-- Overlay de loading durante processamento
-- Animações suaves de transição
+## 🔗 Integração com Backend Python
 
-## 🚀 Deploy em Produção
+O backend Python deve fazer POST para este servidor:
 
-### Opção 1: Servidor Web Estático
-1. Faça upload dos arquivos para qualquer servidor web
-2. Configure CORS na API para permitir o domínio
-3. Atualize `API_BASE_URL` para o endereço da API
+```python
+import requests
 
-### Opção 2: CDN
-1. Use serviços como Netlify, Vercel ou GitHub Pages
-2. Configure variáveis de ambiente para API URL
-3. Configure redirecionamentos se necessário
-
-### Opção 3: Container Docker
-```dockerfile
-FROM nginx:alpine
-COPY frontend/ /usr/share/nginx/html/
-EXPOSE 80
+def send_progress_update(data):
+    url = "https://seu-frontend.onrender.com/api/progress-update"  # Substituir após deploy
+    requests.post(url, json=data)
 ```
 
-## 🔒 Segurança
+## 📝 Notas importantes
 
-### Validações Client-Side
-- Verificação de tipo MIME
-- Validação de tamanho de arquivo
-- Sanitização de nomes de arquivo
-
-### Comunicação com API
-- Headers apropriados para uploads
-- Tratamento de timeouts
-- Validação de respostas JSON
-
-## 📈 Performance
-
-### Otimizações
-- CSS minificado para produção
-- Lazy loading de componentes
-- Debounce em eventos de input
-- Cache de configurações da API
-
-### Métricas
-- Tempo de carregamento inicial < 2s
-- Responsividade de interações < 100ms
-- Upload progressivo com feedback
-
-## 🛡️ Compatibilidade
-
-### Navegadores Suportados
-- ✅ Chrome 60+
-- ✅ Firefox 55+
-- ✅ Safari 12+
-- ✅ Edge 79+
-
-### APIs Utilizadas
-- Fetch API (nativa)
-- FormData API (uploads)
-- File API (drag & drop)
-- CSS Grid & Flexbox
-
-## 📝 Changelog
-
-### v1.0.0
-- ✅ Interface inicial completa
-- ✅ Upload por drag & drop
-- ✅ Visualização de resultados
-- ✅ Design responsivo
-- ✅ Sistema de modais
-- ✅ Download de relatórios
+- O Render pode colocar apps gratuitos em "sleep" após inatividade
+- O primeiro request após sleep pode demorar ~30 segundos
+- Para apps em produção, considere plano pago
+- WebSocket funciona automaticamente no Render
