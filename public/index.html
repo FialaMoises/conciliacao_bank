@@ -1147,66 +1147,68 @@
             display: inline-block;
         }
 
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        /* Dashboard de Categorias - Layout Horizontal */
+        .results-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 1.5rem;
         }
 
-        .result-category {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .result-category::before {
+        .category-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 4px;
+            bottom: 0;
+            width: 6px;
             background: var(--category-color);
         }
 
-        .result-category:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        .category-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            border-color: var(--category-color);
         }
 
-        .conciliated-category {
+        .category-card.conciliated {
             --category-color: #10b981;
         }
 
-        .suggested-category {
+        .category-card.suggested {
             --category-color: #f59e0b;
         }
 
-        .pending-category {
-            --category-color: #6b7280;
-        }
-
-        .no-correlation-category {
+        .category-card.not-conciliated {
             --category-color: #ef4444;
         }
 
-        .category-header {
+        .category-card-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #f1f5f9;
+            gap: 1.5rem;
+            flex: 1;
         }
 
-        .category-icon {
-            font-size: 2rem;
-            width: 60px;
-            height: 60px;
+        .category-card-icon {
+            font-size: 2.5rem;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1214,25 +1216,264 @@
             background: var(--category-color);
             color: white;
             flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .category-title {
+        .category-card-info {
+            flex: 1;
+        }
+
+        .category-card-title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-card-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .category-card-count {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--category-color);
+            text-align: right;
+            line-height: 1;
+        }
+
+        .category-card-label {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.25rem;
+            text-align: right;
+        }
+
+        /* Painel Detalhado Full-Screen */
+        .detail-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 9999;
+            overflow-y: auto;
+            animation: slideInRight 0.4s ease-out;
+        }
+
+        .detail-panel.show {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .detail-panel-header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .detail-panel-header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .detail-panel-back {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .detail-panel-back:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-4px);
+        }
+
+        .detail-panel-title-section {
+            flex: 1;
+            text-align: center;
+        }
+
+        .detail-panel-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-panel-subtitle {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .detail-panel-filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .detail-panel-filter-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .detail-panel-filter-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .detail-panel-body {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Layout de 2 Colunas - Simplificado */
+        .two-column-view {
+            margin-top: 1rem;
+            padding: 1rem;
+        }
+
+        .transaction-item {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .transaction-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+        }
+
+        .transaction-item-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .transaction-item-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .transaction-item-title {
+            flex: 1;
             font-weight: 600;
             color: #1e293b;
-            font-size: 1.1rem;
-            flex-grow: 1;
+            font-size: 1rem;
         }
 
-        .category-count {
-            font-size: 2rem;
+        .transaction-item-value {
             font-weight: 700;
-            color: var(--category-color);
+            font-size: 1.1rem;
+        }
+
+        .transaction-item-value.income {
+            color: #10b981;
+        }
+
+        .transaction-item-value.expense {
+            color: #ef4444;
+        }
+
+        .transaction-item-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .transaction-item-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .match-indicator {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
         }
 
         .category-details {
             font-size: 0.875rem;
             color: #64748b;
             line-height: 1.5;
+            display: none;
+        }
+
+        /* Botões de Ação Rápida do Chat */
+        .chat-quick-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .chat-quick-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+        }
+
+        .chat-quick-btn:active {
+            transform: translateY(0);
         }
 
         .detail-item {
@@ -1261,10 +1502,6 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-
             .streaming-section {
                 padding: 1rem;
             }
@@ -1273,10 +1510,47 @@
                 padding: 1rem;
             }
 
-            .category-header {
+            .category-card {
                 flex-direction: column;
                 text-align: center;
-                gap: 0.5rem;
+                padding: 1.5rem;
+            }
+
+            .category-card-left {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .category-card-count {
+                text-align: center;
+            }
+
+            .category-card-label {
+                text-align: center;
+            }
+
+            /* Mobile: pares de transações viram stack vertical */
+            .two-column-view > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+
+            .detail-panel-header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .detail-panel-title-section {
+                text-align: center;
+            }
+
+            .detail-panel-filters {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .detail-panel-body {
+                padding: 1rem;
             }
         }
 
@@ -1289,6 +1563,24 @@
                 flex-direction: column;
                 gap: 1rem;
                 text-align: center;
+            }
+
+            .category-card-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .category-card-count {
+                font-size: 2.5rem;
+            }
+
+            .category-card-title {
+                font-size: 1.1rem;
+            }
+
+            .detail-panel-title {
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -1322,6 +1614,26 @@
         </div>
 
         <div class="content">
+            <!-- API Key Input -->
+            <div style="margin-bottom: 2rem; background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <label for="apiKeyInput" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                    🔑 X-API-KEY (Opcional - Multi-Tenant)
+                </label>
+                <input
+                    type="text"
+                    id="apiKeyInput"
+                    placeholder="Digite seu X-API-KEY ou deixe em branco para usar configuração padrão"
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; transition: border-color 0.3s;"
+                    maxlength="24"
+                    pattern="[a-fA-F0-9]{24}"
+                />
+                <div id="apiKeyStatus" style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;"></div>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #6b7280;">
+                    💡 <strong>Multi-Tenant:</strong> Forneça seu X-API-KEY para usar seu banco de dados específico<br>
+                    📝 <strong>Modo Padrão:</strong> Deixe em branco para usar a configuração padrão do sistema
+                </div>
+            </div>
+
             <!-- Upload Zone -->
             <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon" id="uploadIcon">
@@ -1458,46 +1770,66 @@
                     <div class="results-summary" id="resultsSummary"></div>
                 </div>
 
-                <div class="results-grid">
-                    <div class="result-category conciliated-category">
-                        <div class="category-header">
-                            <div class="category-icon">✅</div>
-                            <div class="category-title">Conciliadas</div>
-                            <div class="category-count" id="finalConciliated">0</div>
+                <!-- Dashboard de Categorias -->
+                <div class="results-dashboard">
+                    <!-- Card Conciliadas -->
+                    <div class="category-card conciliated" onclick="openDetailPanel('conciliated')">
+                        <div class="category-card-left">
+                            <div class="category-card-icon">✅</div>
+                            <div class="category-card-info">
+                                <div class="category-card-title">Conciliadas</div>
+                                <div class="category-card-subtitle">Transações automaticamente conciliadas</div>
+                            </div>
                         </div>
-                        <div class="category-details" id="conciliatedDetails"></div>
-                        <div class="category-transactions" id="conciliatedTransactions"></div>
+                        <div>
+                            <div class="category-card-count" id="finalConciliated">0</div>
+                            <div class="category-card-label">ITENS</div>
+                        </div>
                     </div>
 
-                    <div class="result-category suggested-category">
-                        <div class="category-header">
-                            <div class="category-icon">💡</div>
-                            <div class="category-title">Sugeridas</div>
-                            <div class="category-count" id="finalSuggested">0</div>
+                    <!-- Card Sugeridas -->
+                    <div class="category-card suggested" onclick="openDetailPanel('suggested')">
+                        <div class="category-card-left">
+                            <div class="category-card-icon">💡</div>
+                            <div class="category-card-info">
+                                <div class="category-card-title">Sugeridas</div>
+                                <div class="category-card-subtitle">Sugestões que requerem revisão manual</div>
+                            </div>
                         </div>
-                        <div class="category-details" id="suggestedDetails"></div>
-                        <div class="category-transactions" id="suggestedTransactions"></div>
+                        <div>
+                            <div class="category-card-count" id="finalSuggested">0</div>
+                            <div class="category-card-label">ITENS</div>
+                        </div>
                     </div>
 
-                    <div class="result-category pending-category">
-                        <div class="category-header">
-                            <div class="category-icon">⏳</div>
-                            <div class="category-title">Pendentes</div>
-                            <div class="category-count" id="finalPending">0</div>
+                    <!-- Card Não Conciliadas (Pendentes + Sem Correlação) -->
+                    <div class="category-card not-conciliated" onclick="openDetailPanel('not-conciliated')">
+                        <div class="category-card-left">
+                            <div class="category-card-icon">❌</div>
+                            <div class="category-card-info">
+                                <div class="category-card-title">Não Conciliadas</div>
+                                <div class="category-card-subtitle">Pendentes e sem correlação encontrada</div>
+                            </div>
                         </div>
-                        <div class="category-details" id="pendingDetails"></div>
-                        <div class="category-transactions" id="pendingTransactions"></div>
+                        <div>
+                            <div class="category-card-count" id="finalNotConciliated">0</div>
+                            <div class="category-card-label">ITENS</div>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="result-category no-correlation-category">
-                        <div class="category-header">
-                            <div class="category-icon">❌</div>
-                            <div class="category-title">Sem Correlação</div>
-                            <div class="category-count" id="finalNoCorrelation">0</div>
-                        </div>
-                        <div class="category-details" id="noCorrelationDetails"></div>
-                        <div class="category-transactions" id="noCorrelationTransactions"></div>
-                    </div>
+                <!-- Hidden elements for backward compatibility -->
+                <div style="display: none;">
+                    <div id="finalPending">0</div>
+                    <div id="finalNoCorrelation">0</div>
+                    <div id="conciliatedDetails"></div>
+                    <div id="suggestedDetails"></div>
+                    <div id="pendingDetails"></div>
+                    <div id="noCorrelationDetails"></div>
+                    <div id="conciliatedTransactions"></div>
+                    <div id="suggestedTransactions"></div>
+                    <div id="pendingTransactions"></div>
+                    <div id="noCorrelationTransactions"></div>
                 </div>
 
                 <!-- Seção de Liquidação -->
@@ -1507,40 +1839,18 @@
                         Liquidação de Transações Selecionadas
                     </h3>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                        <div>
-                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
-                                Método de Pagamento <span style="color: #ef4444;">*</span>
-                            </label>
-                            <input type="text" id="paymentMethodId" placeholder="Ex: pm-pix, pm-cartao"
-                                   style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 0.875rem; color: #475569; margin-bottom: 0.5rem;">
+                            <i class="fas fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                            <strong>Liquidação Automática</strong>
                         </div>
-
-                        <div>
-                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
-                                Conta Financeira <span style="color: #ef4444;">*</span>
-                            </label>
-                            <input type="text" id="financialAccountId" placeholder="Ex: fa-conta-corrente"
-                                   style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
-                        </div>
-
-                        <div>
-                            <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">
-                                Motivo da Diferença (opcional)
-                            </label>
-                            <select id="differenceReasonType"
-                                    style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
-                                <option value="">Nenhum</option>
-                                <option value="1">Desconto</option>
-                                <option value="2">Juros</option>
-                                <option value="3">Multa</option>
-                                <option value="4">Taxa bancária</option>
-                                <option value="5">Ajuste contábil</option>
-                                <option value="6">Erro de lançamento</option>
-                                <option value="7">Outros</option>
-                            </select>
+                        <div style="font-size: 0.875rem; color: #64748b;">
+                            Os dados de pagamento (método e conta financeira) serão extraídos automaticamente das transações selecionadas e do arquivo OFX.
                         </div>
                     </div>
+
+                    <!-- Campo "Motivo da Diferença" removido - cada transação já possui seu próprio difference_reason_type -->
+                    <!-- O backend agrupa automaticamente por difference_reason_type e liquida em batches separados -->
 
                     <div style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
                         <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">Transações Selecionadas:</div>
@@ -1718,25 +2028,51 @@
         </div>
     </div>
 
+    <!-- Painel Detalhado Full-Screen -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-panel-header">
+            <div class="detail-panel-header-content">
+                <button class="detail-panel-back" onclick="closeDetailPanel()">
+                    ← Voltar
+                </button>
+                <div class="detail-panel-title-section">
+                    <div class="detail-panel-title" id="detailPanelTitle">Conciliadas</div>
+                    <div class="detail-panel-subtitle" id="detailPanelSubtitle">0 transações</div>
+                </div>
+                <div class="detail-panel-filters">
+                    <button class="detail-panel-filter-btn" onclick="filterDetailPanel('all')">Todas</button>
+                    <button class="detail-panel-filter-btn" onclick="filterDetailPanel('income')">Receitas</button>
+                    <button class="detail-panel-filter-btn" onclick="filterDetailPanel('expense')">Despesas</button>
+                </div>
+            </div>
+        </div>
+        <div class="detail-panel-body">
+            <div class="two-column-view" id="detailPanelContent">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <script>
-        // Configuração dinâmica para funcionar local e no Render
-        const WEBSOCKET_URL = window.location.origin; // Mesma origem do frontend
-        const API_BASE_URL = 'https://holdprintwebbankreconciliation-test.azurewebsites.net'; // Backend Python no Azure
-        const DEFAULT_API_KEY = '65b7dc370e6dc686d4478ea1'; // API Key padrão fixo
+        // Configuração para ambiente local
+        const API_BASE_URL = 'http://localhost:5002';
 
         // Estado
         let currentFile = null;
         let currentSessionId = null;
         let preparationTime = 0;
+        let autoFetchedApiKey = null;  // API Key obtida automaticamente
         let progressStartTime = 0;
         let progressInterval = null;
+        let currentApiKey = null;
 
         // Estado do streaming
         let streamingEventSource = null;
         let streamingStartTime = 0;
         let lastTransactionCount = 0;
+        let ofxBankAccount = null;  // Conta bancária extraída do OFX
         let streamingCounts = {
             conciliated: 0,
             suggested: 0,
@@ -1756,6 +2092,8 @@
             uploadTitle: document.getElementById('uploadTitle'),
             uploadSubtitle: document.getElementById('uploadSubtitle'),
             fileInput: document.getElementById('fileInput'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            apiKeyStatus: document.getElementById('apiKeyStatus'),
             smartPreview: document.getElementById('smartPreview'),
             previewTitle: document.getElementById('previewTitle'),
             previewStats: document.getElementById('previewStats'),
@@ -1769,18 +2107,64 @@
             logSection: document.getElementById('logSection')
         };
 
+        // Auto-fetch X-API-KEY do backend (busca por tenant_id)
+        async function fetchApiKeyAutomatically() {
+            try {
+                // CONFIGURAÇÃO: Defina o tenant_id (X-API-KEY) aqui
+                const tenantId = '687a3effd440b228bf3629e5';
+
+                // Montar URL com tenant_id
+                const fetchUrl = `${API_BASE_URL}/api/get-api-key?tenant_id=${tenantId}`;
+
+                log('🔑 Validando X-API-KEY e obtendo informações do tenant...');
+
+                const response = await fetch(fetchUrl);
+                const data = await response.json();
+
+                if (data.success) {
+                    autoFetchedApiKey = data.api_key;
+                    currentApiKey = data.api_key;  // Usar como currentApiKey
+
+                    log(`✅ X-API-KEY validado: ${autoFetchedApiKey.substring(0, 8)}...`);
+                    log(`📊 Tenant: ${data.tenant_info.name || data.tenant_info.email}`);
+                    log(`🏢 Empresa: ${data.tenant_info.company || 'N/A'}`);
+                    log(`💾 Database: ${data.tenant_info.database}`);
+
+                    // Atualizar interface (se existir campo de API Key)
+                    if (elements.apiKeyInput) {
+                        elements.apiKeyInput.value = autoFetchedApiKey;
+                        validateApiKey();  // Validar e mostrar status
+                    }
+
+                    return true;
+                } else {
+                    log(`⚠️ Não foi possível validar X-API-KEY: ${data.error}`);
+                    log('📝 Sistema irá usar modo legado (.env)');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Erro ao validar X-API-KEY:', error);
+                log('⚠️ Erro ao validar X-API-KEY - usando modo legado (.env)');
+                return false;
+            }
+        }
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', async function() {
             setupEventListeners();
             initializeWebSocket();
             log('🚀 Sistema de upload inteligente carregado');
-            log(`🔑 Usando API Key padrão: ${DEFAULT_API_KEY.substring(0, 8)}...`);
+
+            // Buscar API Key automaticamente ao carregar
+            await fetchApiKeyAutomatically();
         });
 
         // Event listeners
         function setupEventListeners() {
             elements.fileInput.addEventListener('change', handleFileSelect);
             elements.reconcileBtn.addEventListener('click', executeReconciliation);
+            elements.apiKeyInput.addEventListener('input', validateApiKey);
+            elements.apiKeyInput.addEventListener('blur', validateApiKey);
 
             // Drag & Drop
             elements.uploadZone.addEventListener('dragover', handleDragOver);
@@ -1788,11 +2172,44 @@
             elements.uploadZone.addEventListener('drop', handleDrop);
         }
 
-        // Obter headers com X-API-KEY padrão
+        // Validar X-API-KEY
+        function validateApiKey() {
+            const apiKey = elements.apiKeyInput.value.trim();
+
+            if (!apiKey) {
+                elements.apiKeyStatus.textContent = '';
+                elements.apiKeyInput.style.borderColor = '#e5e7eb';
+                currentApiKey = null;
+                return false;
+            }
+
+            // Validar formato (24 caracteres hexadecimais)
+            const isValid = /^[a-fA-F0-9]{24}$/.test(apiKey);
+
+            if (isValid) {
+                elements.apiKeyStatus.textContent = '✅ X-API-KEY válido';
+                elements.apiKeyStatus.style.color = '#10b981';
+                elements.apiKeyInput.style.borderColor = '#10b981';
+                currentApiKey = apiKey;
+                return true;
+            } else {
+                elements.apiKeyStatus.textContent = '❌ X-API-KEY inválido (deve ter 24 caracteres hexadecimais)';
+                elements.apiKeyStatus.style.color = '#ef4444';
+                elements.apiKeyInput.style.borderColor = '#ef4444';
+                currentApiKey = null;
+                return false;
+            }
+        }
+
+        // Obter headers com X-API-KEY
         function getHeaders() {
-            return {
-                'X-API-KEY': DEFAULT_API_KEY
-            };
+            const headers = {};
+
+            if (currentApiKey) {
+                headers['X-API-KEY'] = currentApiKey;
+            }
+
+            return headers;
         }
 
         // Drag & Drop handlers
@@ -1866,7 +2283,14 @@
         // PREPARAÇÃO AUTOMÁTICA DOS DADOS
         async function prepareDataAutomatically(file) {
             log('🔄 Iniciando preparação automática dos dados...');
-            log(`🔑 Usando X-API-KEY: ${DEFAULT_API_KEY.substring(0, 8)}...`);
+
+            // Validar API key (opcional - não bloqueia execução)
+            validateApiKey();
+            if (currentApiKey) {
+                log(`🔑 Modo Multi-Tenant: Usando X-API-KEY: ${currentApiKey.substring(0, 8)}...`);
+            } else {
+                log('📝 Modo Legado: Usando configuração padrão (.env)');
+            }
 
             updateProgressStep(3, 'brain', 'Processando arquivo', 'Extraindo e analisando transações');
             updateProgressBar(60);
@@ -1899,6 +2323,38 @@
                     log(`✅ Preparação concluída em ${preparationTime.toFixed(0)}ms`);
 
                     currentSessionId = data.session_id;
+
+                    // Extrair conta bancária do OFX
+                    console.log('🔍 DEBUG COMPLETO - Estrutura de dados recebida:');
+                    console.log('  data.preview:', data.preview);
+                    console.log('  data.preview.file_stats:', data.preview?.file_stats);
+
+                    if (data.preview && data.preview.file_stats) {
+                        const fileStats = data.preview.file_stats;
+
+                        // Tentar todos os possíveis campos
+                        ofxBankAccount = fileStats.bank_account_id ||
+                                       fileStats.acctid ||
+                                       fileStats.account_id ||
+                                       null;
+
+                        console.log('🔍 DEBUG - Tentativas de captura:');
+                        console.log('  bank_account_id:', fileStats.bank_account_id);
+                        console.log('  acctid:', fileStats.acctid);
+                        console.log('  account_id:', fileStats.account_id);
+                        console.log('  ✅ Valor final de ofxBankAccount:', ofxBankAccount);
+
+                        if (ofxBankAccount) {
+                            log(`🏦 Conta bancária detectada: ${ofxBankAccount}`);
+                        } else {
+                            console.error('❌ ERRO CRÍTICO: Nenhum ID de conta bancária encontrado em file_stats!');
+                            console.log('📋 Campos disponíveis em file_stats:', Object.keys(fileStats));
+                            console.log('📋 Valores completos:', fileStats);
+                        }
+                    } else {
+                        console.error('❌ ERRO CRÍTICO: preview.file_stats não existe na resposta!');
+                        console.log('📋 Estrutura de data:', Object.keys(data));
+                    }
 
                     // Atualizar progresso para análise
                     updateProgressStep(4, 'chart-line', 'Dados preparados', 'Cache criado e análise preliminar concluída');
@@ -2126,9 +2582,15 @@
                 <strong>${summary.conciliated_count}</strong> conciliações automáticas
             `;
 
+            // Unificar Pendentes + Sem Correlação = Não Conciliados
+            const notConciliatedCount = (summary.pending_count || 0) + (summary.no_correlation_count || 0);
+
             // Atualizar contadores finais com animação
             animateValue('finalConciliated', 0, summary.conciliated_count || 0, 1000);
             animateValue('finalSuggested', 0, summary.suggested_count || 0, 1200);
+            animateValue('finalNotConciliated', 0, notConciliatedCount, 1400);
+
+            // Manter contadores ocultos para compatibilidade
             animateValue('finalPending', 0, summary.pending_count || 0, 1400);
             animateValue('finalNoCorrelation', 0, summary.no_correlation_count || 0, 1600);
 
@@ -2289,6 +2751,15 @@
                     const tipoIcon = tipo === 'income' ? '📈' : '📉';
                     const tipoColor = tipo === 'income' ? '#10b981' : '#ef4444';
 
+                    // Extrair payment_method_id do matched_with
+                    const paymentMethodId = matchedWith.payment_method_id || matchedWith.paymentMethodId || '';
+
+                    // DEBUG: Log da estrutura do matched_with
+                    if (index < 2) {  // Só mostra os 2 primeiros para não poluir
+                        console.log(`🔍 DEBUG matched_with [${index}]:`, JSON.stringify(matchedWith, null, 2));
+                        console.log(`💳 Payment Method ID extraído: "${paymentMethodId}"`);
+                    }
+
                     html += `
                         <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: white; border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #e5e7eb;">
                             <input type="checkbox"
@@ -2298,6 +2769,7 @@
                                    data-value="${value}"
                                    data-tipo="${tipo}"
                                    data-category="${category}"
+                                   data-payment-method-id="${paymentMethodId}"
                                    onchange="updateSelectedTransactions()"
                                    style="width: 20px; height: 20px; cursor: pointer;">
                             <div style="flex: 1;">
@@ -2347,25 +2819,10 @@
                 document.getElementById('selectedSummary').textContent =
                     `${typeText} • Total: R$ ${totalValue.toFixed(2)}`;
 
-                // Habilitar botão se tiver campos obrigatórios preenchidos
-                const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
-                const financialAccountId = document.getElementById('financialAccountId').value.trim();
-                document.getElementById('liquidateBtn').disabled = !(count > 0 && paymentMethodId && financialAccountId);
+                // Habilitar botão automaticamente (dados virão das transações)
+                document.getElementById('liquidateBtn').disabled = false;
             }
         }
-
-        // Monitorar mudanças nos campos obrigatórios
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentMethodInput = document.getElementById('paymentMethodId');
-            const financialAccountInput = document.getElementById('financialAccountId');
-
-            if (paymentMethodInput) {
-                paymentMethodInput.addEventListener('input', updateSelectedTransactions);
-            }
-            if (financialAccountInput) {
-                financialAccountInput.addEventListener('input', updateSelectedTransactions);
-            }
-        });
 
         // Executar liquidação
         async function executeLiquidation() {
@@ -2379,41 +2836,87 @@
 
             // Coletar dados das transações selecionadas
             const selectedTransactions = [];
+            const paymentMethods = new Set();
+
             checkboxes.forEach(checkbox => {
                 const matchedId = checkbox.dataset.matchedId;
+                const paymentMethodId = checkbox.dataset.paymentMethodId;
+
                 if (matchedId) {
-                    selectedTransactions.push({
-                        id: checkbox.dataset.transactionId,
-                        matchedWith: { _id: matchedId },
-                        valor: parseFloat(checkbox.dataset.value),
-                        tipo: checkbox.dataset.tipo
+                    const transaction = {
+                        matchedWith: { _id: matchedId },  // ID real do MongoDB
+                        type: checkbox.dataset.tipo,      // expense ou income
+                        paymentMethodId: paymentMethodId  // Método de pagamento
+                    };
+                    selectedTransactions.push(transaction);
+
+                    // Coletar payment methods únicos
+                    if (paymentMethodId) {
+                        paymentMethods.add(paymentMethodId);
+                    }
+
+                    // DEBUG: Log do ID que será enviado
+                    console.log(`📤 Transação selecionada:`, {
+                        matchedId: matchedId,
+                        type: checkbox.dataset.tipo,
+                        value: checkbox.dataset.value,
+                        paymentMethodId: paymentMethodId
                     });
                 }
             });
 
-            // Validar campos obrigatórios
-            const paymentMethodId = document.getElementById('paymentMethodId').value.trim();
-            const financialAccountId = document.getElementById('financialAccountId').value.trim();
+            log(`✅ ${selectedTransactions.length} transações selecionadas`);
 
-            if (!paymentMethodId || !financialAccountId) {
-                showError('Preencha todos os campos obrigatórios (Método de Pagamento e Conta Financeira)');
-                return;
+            // Validar payment methods
+            if (paymentMethods.size === 0) {
+                log('⚠️ Nenhum payment method encontrado nos dados. Usando fallback padrão.');
+                paymentMethods.add('5beab856c452f919fa74131d');  // Adicionar fallback
             }
 
-            // Obter differenceReasonType se preenchido
-            const differenceReasonType = document.getElementById('differenceReasonType').value;
+            if (paymentMethods.size > 1) {
+                const confirmed = confirm(
+                    `⚠️ Atenção!\n\n` +
+                    `As transações selecionadas possuem ${paymentMethods.size} métodos de pagamento diferentes.\n` +
+                    `Isso pode indicar que você está misturando transações de contas diferentes.\n\n` +
+                    `Deseja continuar mesmo assim?`
+                );
+                if (!confirmed) return;
+            }
 
-            // Preparar payload
+            // Usar o payment method mais comum
+            const paymentMethodId = Array.from(paymentMethods)[0];
+
+            // DEBUG: Verificar valores antes de validar
+            console.log('🔍 DEBUG LIQUIDAÇÃO:');
+            console.log('  paymentMethods:', Array.from(paymentMethods));
+            console.log('  paymentMethodId:', paymentMethodId);
+            console.log('  ofxBankAccount:', ofxBankAccount);
+
+            // Validar financial account do OFX (OBRIGATÓRIO!)
+            if (!ofxBankAccount) {
+                const errorMsg = '❌ ERRO: ID da conta financeira não foi encontrado!\n\n' +
+                    'Isso pode acontecer porque:\n' +
+                    '1. O arquivo OFX não contém informações da conta bancária\n' +
+                    '2. A conta não está cadastrada no sistema\n' +
+                    '3. Os dados da conta (código, agência, número) não conferem\n\n' +
+                    'Verifique o console para mais detalhes.';
+
+                console.error('❌ ERRO CRÍTICO: ofxBankAccount não foi definido!');
+                console.error('Não é possível liquidar sem o ID da conta financeira!');
+                showError(errorMsg);
+                return;  // Abortar liquidação
+            }
+
+            log(`💳 Método de pagamento: ${paymentMethodId}`);
+            log(`🏦 Conta financeira: ${ofxBankAccount}`);
+
+            // Preparar payload (sem differenceReasonType - cada transação já tem o seu próprio)
             const payload = {
                 selectedTransactions: selectedTransactions,
                 period: new Date().toISOString().substring(0, 7), // YYYY-MM
                 paymentMethodId: paymentMethodId,
-                financialAccountId: financialAccountId
+                financialAccountId: ofxBankAccount
             };
-
-            if (differenceReasonType) {
-                payload.differenceReasonType = parseInt(differenceReasonType);
-            }
 
             // UI feedback
             const liquidateBtn = document.getElementById('liquidateBtn');
@@ -2426,12 +2929,17 @@
 
             try {
                 log(`📡 Enviando ${selectedTransactions.length} transações para liquidação...`);
-                log(`💳 Método: ${paymentMethodId} | Conta: ${financialAccountId}`);
+                log(`💳 Método: ${paymentMethodId} | Conta: ${ofxBankAccount}`);
+
+                // ⚠️ Backend está usando token mockado (funcional do C#)
+                // Não precisa gerar token aqui, apenas enviar um dummy
+                log('🔐 Backend usando token mockado funcional...');
 
                 const response = await fetch(`${API_BASE_URL}/reconciliation/liquidate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer dummy-token-backend-usa-mock`,
                         ...getHeaders()
                     },
                     body: JSON.stringify(payload)
@@ -2632,7 +3140,7 @@
         // Inicializar conexão WebSocket
         function initializeWebSocket() {
             try {
-                socket = io(WEBSOCKET_URL);
+                socket = io('http://localhost:3000');
 
                 socket.on('connect', () => {
                     isWebSocketConnected = true;
@@ -3041,7 +3549,7 @@
 
             try {
                 // Resetar no servidor WebSocket
-                await fetch(`${WEBSOCKET_URL}/api/reset`, { method: 'POST' });
+                await fetch('http://localhost:3000/api/reset', { method: 'POST' });
 
                 // Usar endpoint de conciliação regular que dispara o streaming
                 const formData = new FormData();
@@ -3088,7 +3596,7 @@
 
             // Resetar contadores no servidor WebSocket
             try {
-                await fetch(`${WEBSOCKET_URL}/api/reset`, { method: 'POST' });
+                await fetch('http://localhost:3000/api/reset', { method: 'POST' });
                 log('🔄 Servidor WebSocket resetado');
             } catch (e) {
                 log(`⚠️ Erro ao resetar servidor WebSocket: ${e.message}`);
@@ -3265,6 +3773,479 @@
         }
 
         // Reset para novo teste
+        // === FUNÇÕES DO PAINEL DETALHADO ===
+
+        let currentDetailCategory = null;
+        let currentDetailFilter = 'all';
+
+        function openDetailPanel(category) {
+            currentDetailCategory = category;
+            currentDetailFilter = 'all';
+
+            const panel = document.getElementById('detailPanel');
+            const titleEl = document.getElementById('detailPanelTitle');
+            const subtitleEl = document.getElementById('detailPanelSubtitle');
+            const contentEl = document.getElementById('detailPanelContent');
+
+            // Definir título e dados baseado na categoria
+            let title = '';
+            let data = [];
+            let count = 0;
+
+            switch(category) {
+                case 'conciliated':
+                    title = '✅ Conciliadas';
+                    data = reconciliationResults.conciliated || [];
+                    count = data.length;
+                    break;
+                case 'suggested':
+                    title = '💡 Sugeridas';
+                    data = reconciliationResults.suggested || [];
+                    count = data.length;
+                    break;
+                case 'not-conciliated':
+                    title = '❌ Não Conciliadas';
+                    // Unificar pendentes + sem correlação
+                    data = [
+                        ...(reconciliationResults.pending || []),
+                        ...(reconciliationResults.no_correlation || [])
+                    ];
+                    count = data.length;
+                    break;
+            }
+
+            titleEl.textContent = title;
+            subtitleEl.textContent = `${count} transaç${count === 1 ? 'ão' : 'ões'}`;
+
+            // Renderizar conteúdo em 2 colunas
+            renderTwoColumnView(contentEl, data, category);
+
+            // Mostrar painel
+            panel.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevenir scroll do body
+        }
+
+        function closeDetailPanel() {
+            const panel = document.getElementById('detailPanel');
+            panel.classList.remove('show');
+            document.body.style.overflow = ''; // Restaurar scroll
+            currentDetailCategory = null;
+            currentDetailFilter = 'all';
+        }
+
+        function filterDetailPanel(filter) {
+            currentDetailFilter = filter;
+            // Reabrir com o filtro aplicado
+            if (currentDetailCategory) {
+                openDetailPanel(currentDetailCategory);
+            }
+        }
+
+        // === FUNÇÃO ESPECIAL PARA NÃO CONCILIADAS COM CHAT ===
+
+        let currentChatTransactionIndex = 0;
+        let chatMessages = {};  // Armazena mensagens por transação: { transactionId: [...messages] }
+
+        function renderNotConciliatedWithChat(container, data) {
+            console.log('💬 Renderizando modo chat para Não Conciliadas');
+
+            // Inicializar com primeira transação
+            if (currentChatTransactionIndex >= data.length) {
+                currentChatTransactionIndex = 0;
+            }
+
+            const currentItem = data[currentChatTransactionIndex];
+            const bankTransactions = currentItem.bank_transactions || [currentItem];
+            const bankTrans = bankTransactions[0] || {};
+
+            const transactionId = bankTrans.id || bankTrans._id || `not_conciliated_${currentChatTransactionIndex}`;
+            const value = Math.abs(parseFloat(bankTrans.value || bankTrans.valor || 0));
+            const date = bankTrans.date || bankTrans.data || '';
+            const description = bankTrans.description || bankTrans.descricao || 'Sem descrição';
+            const isExpense = parseFloat(bankTrans.value || bankTrans.valor || 0) < 0;
+            const tipo = isExpense ? 'expense' : 'income';
+
+            // Inicializar chat se não existir
+            if (!chatMessages[transactionId]) {
+                chatMessages[transactionId] = [
+                    {
+                        role: 'assistant',
+                        content: `Olá! 👋 Esta transação não foi conciliada automaticamente. Como posso ajudar?`,
+                        timestamp: new Date().toISOString()
+                    }
+                ];
+            }
+
+            let contentHTML = `
+                <!-- Navegação entre transações -->
+                <div style="background: #f1f5f9; padding: 1rem 2rem; margin: -2rem -2rem 2rem -2rem; border-bottom: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <button onclick="navigateChatTransaction(-1)" ${currentChatTransactionIndex === 0 ? 'disabled' : ''}
+                            style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: 2px solid #cbd5e1; background: white; cursor: pointer; font-weight: 600;">
+                        ← Anterior
+                    </button>
+                    <div style="font-weight: 600; color: #475569;">
+                        Transação ${currentChatTransactionIndex + 1} de ${data.length}
+                    </div>
+                    <button onclick="navigateChatTransaction(1)" ${currentChatTransactionIndex >= data.length - 1 ? 'disabled' : ''}
+                            style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: 2px solid #cbd5e1; background: white; cursor: pointer; font-weight: 600;">
+                        Próxima →
+                    </button>
+                </div>
+
+                <!-- Layout 2 Colunas: Transação + Chat -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; height: calc(100vh - 350px);">
+
+                    <!-- COLUNA ESQUERDA: Transação do Extrato -->
+                    <div style="display: flex; flex-direction: column;">
+                        <div style="font-weight: 700; color: #1e293b; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.5rem;">🏦</span>Extrato Bancário
+                        </div>
+
+                        <div class="transaction-item" style="flex: 1;">
+                            <div class="transaction-item-header">
+                                <div class="transaction-item-title">${description}</div>
+                                <div class="transaction-item-value ${tipo}">R$ ${value.toFixed(2)}</div>
+                            </div>
+                            <div class="transaction-item-details">
+                                <div class="transaction-item-detail">📅 ${date}</div>
+                                <div class="transaction-item-detail">🆔 ${transactionId.substring(0, 20)}...</div>
+                                <div class="transaction-item-detail">${tipo === 'income' ? '📈 Receita' : '📉 Despesa'}</div>
+                            </div>
+
+                            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9;">
+                                <div style="font-weight: 600; color: #64748b; margin-bottom: 1rem;">Ações Rápidas</div>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <button onclick="chatQuickAction('search', '${transactionId}')" class="chat-quick-btn">
+                                        🔍 Buscar na Base de Dados
+                                    </button>
+                                    <button onclick="chatQuickAction('create', '${transactionId}')" class="chat-quick-btn">
+                                        ✨ Criar Novo Documento
+                                    </button>
+                                    <button onclick="chatQuickAction('skip', '${transactionId}')" class="chat-quick-btn" style="background: #f1f5f9; color: #64748b;">
+                                        ⏭️ Pular por Enquanto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA: Chat de Assistência -->
+                    <div style="display: flex; flex-direction: column;">
+                        <div style="font-weight: 700; color: #1e293b; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.5rem;">💬</span>Assistente de Conciliação
+                        </div>
+
+                        <!-- Área de mensagens do chat -->
+                        <div id="chatMessagesArea" style="flex: 1; background: white; border: 2px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; overflow-y: auto; margin-bottom: 1rem;">
+                            ${renderChatMessages(transactionId)}
+                        </div>
+
+                        <!-- Input de mensagem -->
+                        <div style="display: flex; gap: 0.75rem;">
+                            <input type="text" id="chatInput" placeholder="Digite sua mensagem..."
+                                   onkeypress="if(event.key === 'Enter') sendChatMessage('${transactionId}')"
+                                   style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.95rem;">
+                            <button onclick="sendChatMessage('${transactionId}')" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = contentHTML;
+
+            // Auto-scroll chat para o final
+            setTimeout(() => {
+                const chatArea = document.getElementById('chatMessagesArea');
+                if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+            }, 100);
+        }
+
+        function renderChatMessages(transactionId) {
+            const messages = chatMessages[transactionId] || [];
+
+            if (messages.length === 0) {
+                return '<div style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhuma mensagem ainda</div>';
+            }
+
+            return messages.map(msg => {
+                const isUser = msg.role === 'user';
+                return `
+                    <div style="display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 1rem;">
+                        <div style="max-width: 80%; background: ${isUser ? '#3b82f6' : '#f1f5f9'}; color: ${isUser ? 'white' : '#1e293b'};
+                                    padding: 0.75rem 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="font-size: 0.95rem; line-height: 1.5;">${msg.content}</div>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem; opacity: 0.7;">
+                                ${new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function navigateChatTransaction(direction) {
+            const data = reconciliationResults.pending.concat(reconciliationResults.no_correlation);
+            currentChatTransactionIndex += direction;
+
+            if (currentChatTransactionIndex < 0) currentChatTransactionIndex = 0;
+            if (currentChatTransactionIndex >= data.length) currentChatTransactionIndex = data.length - 1;
+
+            openDetailPanel('not-conciliated');
+        }
+
+        async function sendChatMessage(transactionId) {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Adicionar mensagem do usuário
+            if (!chatMessages[transactionId]) chatMessages[transactionId] = [];
+            chatMessages[transactionId].push({
+                role: 'user',
+                content: message,
+                timestamp: new Date().toISOString()
+            });
+
+            input.value = '';
+
+            // Re-renderizar chat
+            const chatArea = document.getElementById('chatMessagesArea');
+            chatArea.innerHTML = renderChatMessages(transactionId);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Mostrar indicador de digitação
+            chatMessages[transactionId].push({
+                role: 'assistant',
+                content: '💬 Digitando...',
+                timestamp: new Date().toISOString(),
+                isTyping: true
+            });
+            chatArea.innerHTML = renderChatMessages(transactionId);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            try {
+                // Enviar para o backend processar
+                const response = await fetch(`${API_BASE_URL}/chat-reconciliation`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        transaction_id: transactionId,
+                        message: message,
+                        chat_history: chatMessages[transactionId].filter(m => !m.isTyping)
+                    })
+                });
+
+                const data = await response.json();
+
+                // Remover indicador de digitação
+                chatMessages[transactionId] = chatMessages[transactionId].filter(m => !m.isTyping);
+
+                // Adicionar resposta do assistente
+                chatMessages[transactionId].push({
+                    role: 'assistant',
+                    content: data.response || 'Desculpe, ocorreu um erro.',
+                    timestamp: new Date().toISOString()
+                });
+
+                // Re-renderizar
+                chatArea.innerHTML = renderChatMessages(transactionId);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+            } catch (error) {
+                console.error('Erro ao enviar mensagem:', error);
+
+                // Remover digitando e adicionar erro
+                chatMessages[transactionId] = chatMessages[transactionId].filter(m => !m.isTyping);
+                chatMessages[transactionId].push({
+                    role: 'assistant',
+                    content: 'Desculpe, não consegui processar sua mensagem. Tente novamente.',
+                    timestamp: new Date().toISOString()
+                });
+
+                chatArea.innerHTML = renderChatMessages(transactionId);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+        }
+
+        function chatQuickAction(action, transactionId) {
+            let message = '';
+
+            switch(action) {
+                case 'search':
+                    message = 'Buscar documentos similares na base de dados';
+                    break;
+                case 'create':
+                    message = 'Criar um novo documento na base de dados para esta transação';
+                    break;
+                case 'skip':
+                    navigateChatTransaction(1);
+                    return;
+            }
+
+            document.getElementById('chatInput').value = message;
+            sendChatMessage(transactionId);
+        }
+
+        // === FIM DAS FUNÇÕES DE CHAT ===
+
+        function renderTwoColumnView(container, data, category) {
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: #94a3b8;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">Nenhuma transação encontrada</div>
+                        <div style="font-size: 0.95rem;">Não há dados para exibir nesta categoria</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // DEBUG: Log primeiro item para verificar estrutura
+            console.log(`📊 Renderizando ${category} - Total de itens:`, data.length);
+            if (data.length > 0) {
+                console.log('📋 Estrutura do primeiro item:', data[0]);
+            }
+
+            // MODO ESPECIAL: Chat para Não Conciliadas
+            if (category === 'not-conciliated') {
+                renderNotConciliatedWithChat(container, data);
+                return;
+            }
+
+            // NOVA ESTRUTURA: Criar pares de transações lado a lado (não mais 2 colunas separadas)
+            let contentHTML = '';
+
+            // Headers das colunas
+            contentHTML += `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1rem; padding: 0 1rem;">
+                    <div style="font-weight: 700; color: #1e293b; font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.5rem;">🏦</span>Extrato Bancário
+                    </div>
+                    <div style="font-weight: 700; color: #1e293b; font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.5rem;">💾</span>Base de Dados
+                    </div>
+                </div>
+            `;
+
+            data.forEach((item, index) => {
+                // Estrutura do item pode variar - tentar múltiplas propriedades
+                const bankTransactions = item.bank_transactions ||
+                                        (item.value !== undefined || item.valor !== undefined ? [item] : []);
+
+                // Fallbacks para mongo_documents
+                let mongoDocuments = item.mongo_documents;
+
+                if (!mongoDocuments || mongoDocuments.length === 0) {
+                    if (item.matched_with) {
+                        mongoDocuments = [item.matched_with];
+                    } else if (item.matched_document) {
+                        mongoDocuments = [item.matched_document];
+                    } else if (item.matched_document_id || item.system_description) {
+                        mongoDocuments = [{
+                            _id: item.matched_document_id,
+                            id: item.matched_document_id,
+                            description: item.system_description,
+                            descricao: item.system_description,
+                            value: item.system_value,
+                            valor: item.system_value,
+                            date: item.system_due_date || item.system_settlement_date,
+                            data: item.system_due_date || item.system_settlement_date
+                        }];
+                    } else {
+                        mongoDocuments = [];
+                    }
+                }
+
+                bankTransactions.forEach((bankTrans, bIndex) => {
+                    const mongoDoc = mongoDocuments[bIndex] || mongoDocuments[0] || {};
+
+                    const transactionId = bankTrans.id || bankTrans._id || `${category}_${index}_${bIndex}`;
+                    const matchedId = mongoDoc._id || mongoDoc.id || '';
+                    const value = Math.abs(parseFloat(bankTrans.value || bankTrans.valor || 0));
+                    const date = bankTrans.date || bankTrans.data || '';
+                    const description = bankTrans.description || bankTrans.descricao || 'Sem descrição';
+
+                    const isExpense = parseFloat(bankTrans.value || bankTrans.valor || 0) < 0;
+                    const tipo = isExpense ? 'expense' : 'income';
+
+                    // DEBUG: Log dos IDs extraídos (apenas primeira iteração)
+                    if (index === 0 && bIndex === 0) {
+                        console.log('🔍 DEBUG - IDs extraídos para checkbox:');
+                        console.log('   📄 mongoDoc completo:', mongoDoc);
+                        console.log('   🆔 matchedId (_id do MongoDB):', matchedId);
+                        console.log('   🆔 transactionId (extrato):', transactionId);
+                        console.log('   📊 tipo:', tipo);
+                        console.log('   💰 value:', value);
+                    }
+
+                    // Aplicar filtro
+                    if (currentDetailFilter !== 'all' && currentDetailFilter !== tipo) {
+                        return;
+                    }
+
+                    const matchScore = item.match_score || item.confidence_score || 0;
+                    const matchPercent = (matchScore * 100).toFixed(0);
+
+                    // CRIAR PAR DE TRANSAÇÕES LADO A LADO
+                    contentHTML += `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem; padding: 0 1rem;">
+                            <!-- COLUNA ESQUERDA: Extrato Bancário -->
+                            <div class="transaction-item">
+                                ${matchScore > 0 ? `<div class="match-indicator">${matchPercent}% Match</div>` : ''}
+                                <div class="transaction-item-header">
+                                    <input type="checkbox" class="transaction-item-checkbox transaction-checkbox"
+                                           data-transaction-id="${transactionId}"
+                                           data-matched-id="${matchedId}"
+                                           data-value="${value}"
+                                           data-tipo="${tipo}"
+                                           data-category="${category}"
+                                           onchange="updateSelectedTransactions()">
+                                    <div class="transaction-item-title">${description}</div>
+                                    <div class="transaction-item-value ${tipo}">R$ ${value.toFixed(2)}</div>
+                                </div>
+                                <div class="transaction-item-details">
+                                    <div class="transaction-item-detail">📅 ${date}</div>
+                                    <div class="transaction-item-detail">🆔 ${transactionId.substring(0, 12)}...</div>
+                                    ${tipo === 'income' ? '<div class="transaction-item-detail">📈 Receita</div>' : '<div class="transaction-item-detail">📉 Despesa</div>'}
+                                </div>
+                            </div>
+
+                            <!-- COLUNA DIREITA: Base de Dados -->
+                            ${matchedId ? `
+                                <div class="transaction-item">
+                                    <div class="transaction-item-header">
+                                        <div class="transaction-item-title">${mongoDoc.description || mongoDoc.descricao || description}</div>
+                                        <div class="transaction-item-value ${tipo}">R$ ${Math.abs(parseFloat(mongoDoc.value || mongoDoc.valor || value)).toFixed(2)}</div>
+                                    </div>
+                                    <div class="transaction-item-details">
+                                        <div class="transaction-item-detail">📅 ${mongoDoc.date || mongoDoc.data || date}</div>
+                                        <div class="transaction-item-detail">🆔 ${matchedId.substring(0, 12)}...</div>
+                                        <div class="transaction-item-detail" style="color: #10b981;">✓ Match Confirmado</div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="transaction-item" style="opacity: 0.5; border-style: dashed;">
+                                    <div class="transaction-item-header">
+                                        <div class="transaction-item-title">Sem correspondência</div>
+                                    </div>
+                                    <div class="transaction-item-details">
+                                        <div class="transaction-item-detail" style="color: #ef4444;">❌ Não encontrado na base</div>
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                });
+            });
+
+            container.innerHTML = contentHTML;
+        }
+
+        // === FIM DAS FUNÇÕES DO PAINEL DETALHADO ===
+
         function clearTest() {
             currentFile = null;
             currentSessionId = null;
@@ -3310,8 +4291,12 @@
             document.getElementById('resultsContainer').style.display = 'none';
             document.getElementById('finalConciliated').textContent = '0';
             document.getElementById('finalSuggested').textContent = '0';
+            document.getElementById('finalNotConciliated').textContent = '0';
             document.getElementById('finalPending').textContent = '0';
             document.getElementById('finalNoCorrelation').textContent = '0';
+
+            // Fechar painel detalhado se estiver aberto
+            closeDetailPanel();
 
             // Reset steps
             for (let i = 1; i <= 5; i++) {
